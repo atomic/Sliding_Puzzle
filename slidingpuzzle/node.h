@@ -1,10 +1,3 @@
- /* 
-  * 
-  * Copyright (C) 2015 Yekun Yang <dylanyang1003@gmail.com>
-  *
-  * Distributed under terms of the MIT license.
-  */
-
 #ifndef NODE_H
 #define NODE_H
 #include <iostream>
@@ -15,7 +8,13 @@ class Node
 {
 public:
     Node() {}
-    Node(string initial){data=initial; order=""; step=0; pos=initial_zero_pos();}
+
+    Node(string initial) : 
+        data(initial), order(""), step(0)
+    {
+        pos=initial_zero_pos();
+    }
+
     string data;        //puzzle status
     string order;       //play order for completing the puzzle
     int pos;            //position of 0 (space)
@@ -27,8 +26,11 @@ public:
     void down();
     void left();
     void right();
+
 private:
+
     void swap(char& i, char& j);
+
 };
 
 int Node::initial_zero_pos(){

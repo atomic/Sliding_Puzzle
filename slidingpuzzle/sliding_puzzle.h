@@ -1,10 +1,3 @@
- /* 
-  * 
-  * Copyright (C) 2015 Yekun Yang <dylanyang1003@gmail.com>
-  *
-  * Distributed under terms of the MIT license.
-  */
-
 #ifndef SLIDING_PUZZLE_H
 #define SLIDING_PUZZLE_H
 #include <vector>
@@ -14,10 +7,16 @@
 class Sliding_Puzzle
 {
 public:
-    Sliding_Puzzle(string initial) {puzzle.data=initial; puzzle.order=""; puzzle.step=0; puzzle.pos=puzzle.initial_zero_pos();}
+
+    Sliding_Puzzle(string initial)  : puzzle(initial)
+    { 
+    }
+    
     void play(); 
+
 private:
     bool complete();
+    Node getSolution();
     Node puzzle;   
     list<Node> status_list;
 };
@@ -32,9 +31,8 @@ bool Sliding_Puzzle::complete(){
     }
 }
 
-//use the std list to store the game tree
-//invalid move will not be stored (that branch of subtree will not be continued)
-void Sliding_Puzzle::play(){
+Node Sliding_Puzzle::getSolution()
+{
     status_list.push_back(puzzle);
     while(!complete()){
         Node next_up=status_list.front();
@@ -75,27 +73,18 @@ void Sliding_Puzzle::play(){
         }
         status_list.pop_front();
     }
+    return status_list.back();
+}
+
+//use the std list to store the game tree
+//invalid move will not be stored (that branch of subtree will not be continued)
+void Sliding_Puzzle::play(){
+
+    Node final = getSolution();
+
     //output the result
-    cout<<"The puzzle "<<puzzle.data<<" has been solved!"<<endl;
-    Node final=status_list.back();
-    cout<<"The play order is "<<final.order<<endl;
-    cout<<"The total step is "<<final.step<<endl;
+    cout << "The puzzle     is " << puzzle.data << " has been solved!" << endl;
+    cout << "The play order is " << final.order << endl;
+    cout << "The total step is " << final.step  << endl;
 }
-
-/**
- * Test case for Sliding_Puzzle class
- * @param none 
- */
-void testSliding_Puzzle() {
-    std::cout << "---   Testing Sliding_Puzzle -----\n";
-    try {
-        Sliding_Puzzle puzzle("415326780");
-        puzzle.play();
-        cout<<endl;
-    } catch (const char* e) {
-        cout << "something went wrong : " << "Sliding_Puzzle" << endl;
-    }
-    cout << "-------- End of Sliding_Puzzle test case -----\n\n";
-}
-
 #endif // SLIDING_PUZZLE_H

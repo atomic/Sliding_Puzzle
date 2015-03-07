@@ -1,13 +1,14 @@
 #include "game.h"
 
-const sf::Vector2f Game::GridPos = sf::Vector2f(300,50);
+const sf::Vector2f Game::GridPos = sf::Vector2f(280,20);
+const int Game::FrameThickness = 5;
 
 /**
  * @brief Constructor to set the size of windows
  *        and initialize objects
  */
 Game::Game()
-    : mWindow(sf::VideoMode(800,500), "SFML Application", sf::Style::Close),
+    : mWindow(sf::VideoMode(450,200), "SFML Application", sf::Style::Close),
       mStrInput(""),
       mConfiguration(new int*[3]), mIsGettingInput(false), mIsAnimating(false)
 {
@@ -17,9 +18,7 @@ Game::Game()
                              sf::IntRect(0,0,150,150));// start at from the pic, grab 32x32
 
     mSpriteBoxes.push_back(sf::Sprite()); // sprite for empty box
-    mSpriteBoxes[0].setTexture(mTextureBox);
-    mSpriteBoxes[0].setTextureRect(sf::IntRect( 2*50, 2*50, 50, 50));
-    // let's populate our vector
+    // Fill vector of sprite with numbered boxes
     for (int i = 0; i < 8; ++i) {
         mSpriteBoxes.push_back(sf::Sprite());
         mSpriteBoxes[i+1].setTexture(mTextureBox);
@@ -34,6 +33,14 @@ Game::Game()
     mBoxSolution.setSize(sf::Vector2f(250,35));
     mBoxSolution.setFillColor(sf::Color::Yellow);
     mBoxSolution.setPosition(sf::Vector2f(10,50));
+    // set the configuration for frame box
+    mBoxPuzzleFrame.setSize(sf::Vector2f(150 + FrameThickness*2,150 + FrameThickness*2));
+    mBoxPuzzleFrame.setPosition(GridPos.x - FrameThickness, GridPos.y - FrameThickness);
+//    mBoxPuzzleFrame.setPosition(GridPos.x - FrameThickness/2, GridPos.y - FrameThickness/2);
+    mBoxPuzzleFrame.setFillColor(sf::Color(214,214,238));
+    mBoxPuzzleFrame.setOutlineColor(sf::Color::Red);
+    mBoxPuzzleFrame.setOutlineThickness(FrameThickness);
+
 
     // set the configuration for text displays
     mTextInput.setFont(mFontGui);     mTextInput.setString(" your combination ");
@@ -47,9 +54,9 @@ Game::Game()
 
 
     // initialize space for my int-configuration of the puzzle ground
-    mConfiguration[0] = new int[3] {0,1,2};
+    mConfiguration[0] = new int[3] {8,1,2};
     mConfiguration[1] = new int[3] {3,4,5};
-    mConfiguration[2] = new int[3] {6,7,8};
+    mConfiguration[2] = new int[3] {6,7,0};
 
 }
 
@@ -141,10 +148,19 @@ void Game::handleNumberInput(sf::Keyboard::Key key)
 /**
  * @brief handle where to display all the grids
  */
-void Game::displayGrid()
+void Game::arrangeGrid()
 {
-    /// TODO: from the 2D array in mConfiguration,
-    /// TODO: plot the boxes side by side with starting position at GridPos
+    /// from the 2D array in mConfiguration,
+    /// plot the boxes side by side with starting position at GridPos
+
+    int i, j;
+    // Loop the whole mConfiguration
+    for(int N = 0; N < 9; N++) {
+        i = N % 3; j = N / 3;
+        if(mConfiguration[i][j] != 0)
+            mSpriteBoxes[mConfiguration[i][j]].setPosition(GridPos.x + i*50,
+                                                       GridPos.y + j*50);
+    }
 }
 
 /**
@@ -154,6 +170,11 @@ void Game::update()
 {
     mBoxCombInput.setOutlineThickness(mIsGettingInput ? 3 : 0);
     if(mIsGettingInput) mTextInput.setString(mStrInput);
+
+    // do sliding animation
+
+    // if not animating
+    arrangeGrid();
 }
 
 /**
@@ -168,7 +189,9 @@ void Game::render()
     mWindow.draw(mTextInput);
     mWindow.draw(mTextSolution);
 
-    mWindow.draw(mSpriteBoxes[0]);
+    mWindow.draw(mBoxPuzzleFrame);
+    for(auto box : mSpriteBoxes)
+        mWindow.draw(box);
 //    mWindow.draw(mTextDirection);
     mWindow.display();
 }

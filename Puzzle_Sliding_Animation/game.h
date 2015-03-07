@@ -20,7 +20,7 @@ private:
     void					handleNumberInput(sf::Keyboard::Key key);
 
     // helper
-    void                    displayGrid();
+    void                    arrangeGrid();
 
 private:
     sf::RenderWindow		mWindow;
@@ -33,8 +33,10 @@ private:
     std::vector<sf::Sprite> mSpriteBoxes;
 
     // Shapes
+    static const int        FrameThickness;
     sf::RectangleShape      mBoxCombInput;
     sf::RectangleShape      mBoxSolution;
+    sf::RectangleShape      mBoxPuzzleFrame;
 
     // direction notices does not need boxes
     sf::Text                mTextInput;

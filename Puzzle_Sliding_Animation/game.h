@@ -4,6 +4,11 @@
 #include <SFML/Graphics.hpp>
 #include <array>
 
+enum Direction {
+    Up, Down, Left, Right
+};
+
+using namespace std;
 
 class Game : private sf::NonCopyable
 {
@@ -16,12 +21,34 @@ private:
     void					update(sf::Time elapsedTime);
     void					render();
     void					renderAnimation();
+    void					activateAnimation();
 
     void					handlePlayerInput(sf::Keyboard::Key key, bool isPressed);
     void					handleNumberInput(sf::Keyboard::Key key);
 
     // helper
-    void                    arrangeGrid();
+    void                     arrangeGrid();
+    /**
+     * @brief functio will takes a character and find out which position to move,
+     *        and what direction
+     */
+    pair<int,Direction>      getIndexBoxToMove(const char &c)
+    {
+        int zero;
+        // find pos of 0 in configuration
+        for(int n = 0; n < 9; n++) {
+            if(mConfiguration[n/3][n%3] == 0) { zero = n; break; }
+        }
+
+        switch (c) {
+        case 'D': return pair<int, Direction>(zero + 3, Up);  break;
+        case 'U': return pair<int, Direction>(zero - 3, Down);  break;
+        case 'L': return pair<int, Direction>(zero - 1, Right);  break;
+        case 'R': return pair<int, Direction>(zero + 1, Left);  break;
+        default:
+            break;
+        }
+    };
 
 private:
     sf::RenderWindow		mWindow;
@@ -31,7 +58,7 @@ private:
     sf::Texture             mTextureBox;
 
     // my sprite
-    std::vector<sf::Sprite> mSpriteBoxes;
+    vector<sf::Sprite>      mSpriteBoxes;
 
     // Shapes
     static const int        FrameThickness;
@@ -49,11 +76,15 @@ private:
     sf::Transform           mTranslateBox;
     float                   mStepDone;
 
+    vector<pair<int,Direction>> mMovingSequence;
+    int                         mCurrentMovingIndex;
+
+
 
     // LOGIC Part
     static const sf::Vector2f GridPos;
 
-    std::string             mStrInput;
+    string                  mStrInput;
     int **                  mConfiguration;
 
     bool                    mIsGettingInput;

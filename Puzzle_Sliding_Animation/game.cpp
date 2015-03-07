@@ -137,7 +137,6 @@ void Game::handlePlayerInput(sf::Keyboard::Key key, bool isPressed)
  */
 void Game::handleNumberInput(sf::Keyboard::Key key)
 {
-    using namespace std;
     switch (key) {
     case sf::Keyboard::Num0: mStrInput += to_string(0); break;
     case sf::Keyboard::Num1: mStrInput += to_string(1); break;
@@ -176,6 +175,7 @@ void Game::arrangeGrid()
                                                        GridPos.y + i*50);
     }
 }
+
 
 /**
  * @brief update informations to next thread
@@ -238,3 +238,17 @@ void Game::renderAnimation()
     mWindow.draw(mSpriteBoxes[5], mTranslateBox);
 }
 
+
+/**
+ * @brief Will checks whether there exists solution yet and then activate animation
+ */
+void Game::activateAnimation()
+{
+    // checks for solution existence
+    // for the strings of solution, populate the vector mMovingSequence with the slides
+    // then start animation, and keep track of it.
+}
+
+
+/// some notes
+/// link for references : https://n-puzzle-solver.appspot.com/

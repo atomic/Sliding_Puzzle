@@ -4,6 +4,7 @@
 #include <SFML/Graphics.hpp>
 #include <array>
 
+
 class Game : private sf::NonCopyable
 {
 public:
@@ -18,6 +19,8 @@ private:
     void					handlePlayerInput(sf::Keyboard::Key key, bool isPressed);
     void					handleNumberInput(sf::Keyboard::Key key);
 
+    // helper
+    void                    displayGrid();
 
 private:
     sf::RenderWindow		mWindow;
@@ -40,6 +43,8 @@ private:
 
 
     // LOGIC Part
+    static const sf::Vector2f GridPos;
+
     std::string             mStrInput;
     int **                  mConfiguration;
 

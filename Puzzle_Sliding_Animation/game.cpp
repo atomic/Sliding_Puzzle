@@ -8,8 +8,8 @@ const sf::Vector2f Game::GridPos = sf::Vector2f(300,50);
  */
 Game::Game()
     : mWindow(sf::VideoMode(800,500), "SFML Application", sf::Style::Close),
-      mIsAnimating(false), mIsGettingInput(false), mStrInput(""),
-      mConfiguration(new int*[3])
+      mStrInput(""),
+      mConfiguration(new int*[3]), mIsGettingInput(false), mIsAnimating(false)
 {
     // get resources
     mFontGui.loadFromFile("../Sliding_Puzzle/Resources/proximanova.ttf");
@@ -143,6 +143,8 @@ void Game::handleNumberInput(sf::Keyboard::Key key)
  */
 void Game::displayGrid()
 {
+    /// TODO: from the 2D array in mConfiguration,
+    /// TODO: plot the boxes side by side with starting position at GridPos
 }
 
 /**

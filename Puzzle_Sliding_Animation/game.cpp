@@ -2,6 +2,7 @@
 
 const sf::Vector2f Game::GridPos = sf::Vector2f(280,20);
 const int Game::FrameThickness = 5;
+const sf::Time Game::TimePerFrame = sf::seconds(1.f/60.f);
 
 /**
  * @brief Constructor to set the size of windows
@@ -9,7 +10,7 @@ const int Game::FrameThickness = 5;
  */
 Game::Game()
     : mWindow(sf::VideoMode(450,200), "SFML Application", sf::Style::Close),
-      mStrInput(""),
+      mStepDone(0), mStrInput(""),
       mConfiguration(new int*[3]), mIsGettingInput(false), mIsAnimating(false)
 {
     // get resources
@@ -17,7 +18,7 @@ Game::Game()
     mTextureBox.loadFromFile("../Sliding_Puzzle/Resources/mgrid.png",
                              sf::IntRect(0,0,150,150));// start at from the pic, grab 32x32
 
-    mSpriteBoxes.push_back(sf::Sprite()); // sprite for empty box
+    mSpriteBoxes.push_back(sf::Sprite()); // sprite for empty box, we never draw this
     // Fill vector of sprite with numbered boxes
     for (int i = 0; i < 8; ++i) {
         mSpriteBoxes.push_back(sf::Sprite());
@@ -50,7 +51,8 @@ Game::Game()
     mTextSolution.setPosition(12,50); mTextSolution.setScale(0.9,0.9); mTextSolution.setColor(sf::Color::Blue);
 
     mTextDirection.setFont(mFontGui); mTextDirection.setString("space : change combination\nenter : get solution\n/ : animate");
-    mTextInput.setColor(sf::Color::Red);
+    mTextDirection.setPosition(12,90);
+    mTextInput.setColor(sf::Color::Red); mTextDirection.setScale(0.5, 0.5);
 
 
     // initialize space for my int-configuration of the puzzle ground
@@ -65,10 +67,19 @@ Game::Game()
  */
 void Game::run()
 {
+    sf::Clock clock;
+    sf::Time timeSinceLastUpdate = sf::Time::Zero;
     while (mWindow.isOpen())
     {
-        processEvents();
-        update();
+        sf::Time elapsedTime = clock.restart();
+        timeSinceLastUpdate += elapsedTime;
+        while (timeSinceLastUpdate > TimePerFrame)
+        {
+            timeSinceLastUpdate -= TimePerFrame;
+
+            processEvents();
+            update(TimePerFrame);
+        }
         render();
     }
 }
@@ -116,8 +127,8 @@ void Game::handlePlayerInput(sf::Keyboard::Key key, bool isPressed)
         mIsGettingInput = true;
     else if (key == sf::Keyboard::Return)
         mWindow.close();
-    else if (key == sf::Keyboard::Slash)
-        mWindow.close();
+    else if (key == sf::Keyboard::Slash && isPressed)
+        mIsAnimating = !mIsAnimating;
 }
 
 /**
@@ -152,29 +163,40 @@ void Game::arrangeGrid()
 {
     /// from the 2D array in mConfiguration,
     /// plot the boxes side by side with starting position at GridPos
+    ///  o ->  j/x
+    ///  ↓
+    ///  i/y
 
     int i, j;
     // Loop the whole mConfiguration
     for(int N = 0; N < 9; N++) {
-        i = N % 3; j = N / 3;
+        i = N / 3; j = N % 3;
         if(mConfiguration[i][j] != 0)
-            mSpriteBoxes[mConfiguration[i][j]].setPosition(GridPos.x + i*50,
-                                                       GridPos.y + j*50);
+            mSpriteBoxes[mConfiguration[i][j]].setPosition(GridPos.x + j*50,
+                                                       GridPos.y + i*50);
     }
 }
 
 /**
  * @brief update informations to next thread
  */
-void Game::update()
+void Game::update(sf::Time elapsedTime)
 {
     mBoxCombInput.setOutlineThickness(mIsGettingInput ? 3 : 0);
     if(mIsGettingInput) mTextInput.setString(mStrInput);
 
     // do sliding animation
-
-    // if not animating
-    arrangeGrid();
+    mStepDone += 50*elapsedTime.asSeconds();
+    if(mIsAnimating && mStepDone < 50)
+        mTranslateBox.translate(0, 50*elapsedTime.asSeconds());
+    else {
+        mIsAnimating = false;
+        mTranslateBox = sf::Transform::Identity;
+        mStepDone = 0; // reset here? hmm
+        // if not animating
+        arrangeGrid(); // might be too much process to do this every loop
+                       // move this to other part after calculation perhaps
+    }
 }
 
 /**
@@ -190,9 +212,29 @@ void Game::render()
     mWindow.draw(mTextSolution);
 
     mWindow.draw(mBoxPuzzleFrame);
-    for(auto box : mSpriteBoxes)
-        mWindow.draw(box);
-//    mWindow.draw(mTextDirection);
+    if(mIsAnimating)
+        renderAnimation();
+    else {
+        for(auto box : mSpriteBoxes)
+            mWindow.draw(box, mTranslateBox);
+    }
+    mWindow.draw(mTextDirection);
     mWindow.display();
+}
+
+/**
+ * @brief a function to render the animation of one box, and draw the rest static
+ */
+void Game::renderAnimation()
+{
+    // find from the first string, which box to animate
+    // draw everything, except that box, then draw that box with translation
+
+    // test animate one box first (move 5 down)
+    for (int n = 0; n < 9; ++n) {
+        if(mConfiguration[n / 3][n % 3] != 5)
+            mWindow.draw(mSpriteBoxes[n]);
+    }
+    mWindow.draw(mSpriteBoxes[5], mTranslateBox);
 }
 

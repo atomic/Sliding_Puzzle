@@ -13,8 +13,9 @@ public:
 
 private:
     void					processEvents();
-    void					update();
+    void					update(sf::Time elapsedTime);
     void					render();
+    void					renderAnimation();
 
     void					handlePlayerInput(sf::Keyboard::Key key, bool isPressed);
     void					handleNumberInput(sf::Keyboard::Key key);
@@ -42,6 +43,11 @@ private:
     sf::Text                mTextInput;
     sf::Text                mTextSolution;
     sf::Text                mTextDirection;
+
+    // Animation
+    static const sf::Time	TimePerFrame;
+    sf::Transform           mTranslateBox;
+    float                   mStepDone;
 
 
     // LOGIC Part

@@ -11,7 +11,8 @@ const sf::Time Game::TimePerFrame = sf::seconds(1.f/60.f);
  */
 Game::Game()
     : mWindow(sf::VideoMode(450,200), "SFML Application", sf::Style::Close),
-      mStepDone(0), mStrInput(""),
+      mFrameStepDone(0), mIndexToAnimate(-1), mIndexDirection(Up),
+      mStrInput(""),
       mConfiguration(new int*[3]), mIsGettingInput(false),
       mHasSolutionReady(false), mIsAnimating(false)
 {
@@ -53,7 +54,7 @@ Game::Game()
     mTextSolution.setPosition(12,50); mTextSolution.setScale(0.5,0.5); mTextSolution.setColor(sf::Color::Blue);
     // set the configuration for direction text displays
     mTextDirection.setFont(mFontGui); mTextDirection.setString(
-                "space : Input combination\nBS : Reset\nEnter : get solution\n/ : animate");
+                "space : Input combination\nBackSpace : Reset\nEnter : get solution\n/ : animate");
     mTextDirection.setPosition(12,90);
     mTextInput.setColor(sf::Color::Red); mTextDirection.setScale(0.5, 0.5);
 
@@ -62,6 +63,7 @@ Game::Game()
     mConfiguration[1] = new int[3] {3,4,5};
     mConfiguration[2] = new int[3] {6,7,8};
 
+    arrangeGrid();
 }
 
 /**
@@ -80,9 +82,9 @@ void Game::run()
             timeSinceLastUpdate -= TimePerFrame;
 
             processEvents();
-            update(TimePerFrame);
+            update(TimePerFrame); // information
         }
-        render();
+        render(); // graphics
     }
 }
 
@@ -109,6 +111,8 @@ void Game::processEvents()
             break;
         case sf::Event::Closed:
             mWindow.close();
+            break;
+        default:
             break;
         }
     }
@@ -180,26 +184,26 @@ void Game::arrangeGrid()
     }
 }
 
-
 /**
  * @brief update informations to next thread
  */
 void Game::update(sf::Time elapsedTime)
 {
+    // Color the input text box outline
     mBoxCombInput.setOutlineThickness(mIsGettingInput ? 3 : 0);
     if(mIsGettingInput) mTextInput.setString(mStrInput);
 
     // do sliding animation
-    mStepDone += 50*elapsedTime.asSeconds();
-    if(mIsAnimating && mStepDone < 50)
-        mTranslateBox.translate(0, 50*elapsedTime.asSeconds());
+    if(mIsAnimating && mFrameStepDone < 50)
+        prepareAnimation(elapsedTime);
+    else if(mIsAnimating && !isSequenceComplete()) {
+        proceedSequence(); // update mFramestepdone, and other stuffs
+    }
     else {
         mIsAnimating = false;
         mTranslateBox = sf::Transform::Identity;
-        mStepDone = 0; // reset here? hmm
+        mFrameStepDone = 0; // reset here? hmm
         // if not animating
-        arrangeGrid(); // might be too much process to do this every loop
-                       // move this to other part after calculation perhaps
     }
 }
 
@@ -214,7 +218,7 @@ void Game::syncConfigInput()
 }
 
 /**
- * @brief Will checks whether there exists solution yet and then activate animation
+ * @brief Will checks whether there exists solution yet
  */
 bool Game::prepareSolution()
 {
@@ -223,6 +227,9 @@ bool Game::prepareSolution()
     // checks for solution existence
     if(mStrInput.size() != 9) return false;
     if(copyOfInput != "012345678") return false;
+    // up to this point, input is valid
+    syncConfigInput();
+    arrangeGrid();
 
     Puzzle::Sliding_Puzzle solveThis(mStrInput.c_str());
     Puzzle::Node solution = solveThis.getSolution();
@@ -230,6 +237,40 @@ bool Game::prepareSolution()
     mTextSolution.setString(solution.order + string(" (") + to_string(solution.step) + string(")"));
     return true;
 }
+
+/**
+ * NOTE : This should be run first before every animation
+ * @brief Check for sequence to animate
+ */
+void Game::proceedSequence()
+{
+    // ex : mZeroIndex = [ 4, 3, 0, 1]
+    // ex : mIndexToAnimate = [ 3, 0, 1]
+    // Update the correct gridview
+    int prev_zero;
+    if(mStep != 0) { // by the time it gets here, mIndexAnimate still store mStep[0] value
+        prev_zero = mZeroIndexes[mStep - 1];
+        swap(mConfiguration[prev_zero/3, prev_zero%3],
+                mConfiguration[mIndexToAnimate/3, mIndexToAnimate%3]);
+    }
+    arrangeGrid();
+
+    mIndexToAnimate = mMovingSequence[mStep].first;
+    mIndexDirection = mMovingSequence[mStep].second;
+
+    mStep++;
+    mFrameStepDone = 0;
+
+
+    // we should also change configuration and update the on screen changes here
+    // TODO
+
+    // then we reset to their correct position
+    mTranslateBox = sf::Transform::Identity; // reset the boxes position
+    for(auto i : mSpriteBoxes)
+        mWindow.draw(i, mTranslateBox);
+}
+
 
 
 /**
@@ -243,28 +284,38 @@ void Game::activateAnimation()
     for(int n = 0; n < 9; n++) {
         if(mConfiguration[n/3][n%3] == 0) { zero = n; break; }
     }
-
+    mZeroIndexes.push_back(zero);
     // for the strings of solution, populate the vector mMovingSequence with the slides
-    for(auto N : mSolution)
+    for(auto N : mSolution) {
         mMovingSequence.push_back(getIndexBoxToMove(zero, N)); // zero will updates inside
+        mZeroIndexes.push_back(zero); // we store twin series later making swapping easier
+    }
 
     // then start animation, and keep track of it.
+    // by now sequence already populated with length mSolution.length()
+    // so, let's fill mStepLeft with mSolution.length()
+    mStep = 0;
+    mIsAnimating = true; // this should signal next update to start sequence animation
+    proceedSequence(); // This may be buggy
 }
 
 /**
+ * This is called every frame (depending on the time)
  * @brief a function to render the animation of one box, and draw the rest static
  */
-void Game::renderAnimation()
+void Game::prepareAnimation(sf::Time elapsedTime)
 {
-    // find from the first string, which box to animate
-    // draw everything, except that box, then draw that box with translation
-
-    // test animate one box first (move 5 down)
-    for (int n = 0; n < 9; ++n) {
-        if(mConfiguration[n / 3][n % 3] != 5)
-            mWindow.draw(mSpriteBoxes[n]);
+    float frame_delta = 50*elapsedTime.asSeconds();
+    mFrameStepDone += frame_delta;
+    // find out direction of animation
+    switch (mIndexDirection) {
+    case Up:   mTranslateBox.translate(0, -frame_delta);   break;
+    case Down: mTranslateBox.translate(0,  frame_delta);   break;
+    case Left: mTranslateBox.translate(-frame_delta, 0);   break;
+    case Right:mTranslateBox.translate( frame_delta, 0);   break;
+    default:
+        break;
     }
-    mWindow.draw(mSpriteBoxes[5], mTranslateBox);
 }
 
 /**
@@ -280,11 +331,18 @@ void Game::render()
     mWindow.draw(mTextSolution);
 
     mWindow.draw(mBoxPuzzleFrame);
-    if(mIsAnimating)
-        renderAnimation();
-    else {
+
+
+    if (!mIsAnimating) { // the animation is handled on update()->renderAnimation
         for(auto box : mSpriteBoxes)
-            mWindow.draw(box, mTranslateBox);
+            mWindow.draw(box); // if not animating, just draw static boxes
+    } else {
+        // first render the static boxes
+        for (int n = 0; n < 9; ++n) {
+            if(mConfiguration[n / 3][n % 3] != mIndexToAnimate)
+                mWindow.draw(mSpriteBoxes[n]);
+        }
+        mWindow.draw(mSpriteBoxes[mIndexToAnimate], mTranslateBox);
     }
     mWindow.draw(mTextDirection);
     mWindow.display();

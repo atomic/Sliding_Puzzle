@@ -7,7 +7,7 @@
 //#include "../slidingpuzzle/sliding_puzzle.h"
 
 enum Direction {
-    Up, Down, Left, Right
+    Up = -3, Down = 3, Left = -1, Right = 1
 };
 
 using namespace std;
@@ -24,7 +24,7 @@ private:
     bool					prepareSolution();    /// input -> solution -> ready for animate
     void					syncConfigInput();    /// sync display grid with input
     void                    activateAnimation();  /// setting up animation mode
-    void					renderAnimation();    /// render each iteration
+    void					prepareAnimation(sf::Time elapsedTime);    /// render each iteration
     void					render();
 
     void					handlePlayerInput(sf::Keyboard::Key key, bool isPressed);
@@ -32,6 +32,8 @@ private:
 
     // helper
     void                     arrangeGrid();
+    bool                     isSequenceComplete() { return mStep == mSolution.length(); };
+    void                     proceedSequence();       /// prepare for next animation sequence
     /**
      * @brief functio will takes a character and find out which position to move,
      *        and what direction
@@ -45,50 +47,53 @@ private:
         case 'R': zero += 1; return pair<int, Direction>(zero, Left);  break;
         default:
             break;
-        }
+        } throw logic_error("ERROR: No index to move");
     };
 
 private:
-    sf::RenderWindow		mWindow;
+    sf::RenderWindow		  mWindow;
 
     // Resources
-    sf::Font                mFontGui;
-    sf::Texture             mTextureBox;
+    sf::Font                  mFontGui;
+    sf::Texture               mTextureBox;
 
     // my sprite
-    vector<sf::Sprite>      mSpriteBoxes;
+    vector<sf::Sprite>        mSpriteBoxes;
 
     // Shapes
-    static const int        FrameThickness;
-    sf::RectangleShape      mBoxCombInput;
-    sf::RectangleShape      mBoxSolution;
-    sf::RectangleShape      mBoxPuzzleFrame;
+    static const sf::Vector2f GridPos;
+    static const int          FrameThickness;
+    sf::RectangleShape        mBoxCombInput;
+    sf::RectangleShape        mBoxSolution;
+    sf::RectangleShape        mBoxPuzzleFrame;
 
     // direction notices does not need boxes
-    sf::Text                mTextInput;
-    sf::Text                mTextSolution;
-    sf::Text                mTextDirection;
+    sf::Text                  mTextInput;
+    sf::Text                  mTextSolution;
+    sf::Text                  mTextDirection;
 
     // Animation
-    static const sf::Time	TimePerFrame;
-    sf::Transform           mTranslateBox;
-    float                   mStepDone;
+    static const sf::Time	  TimePerFrame;
+    sf::Transform             mTranslateBox;
+    float                     mFrameStepDone;     // For one frame
+    int                       mStep;     // For one frame
 
     vector<pair<int,Direction>> mMovingSequence;
-    int                         mCurrentMovingIndex;
+    vector<int>               mZeroIndexes; // just to make swapping easier
+    int                       mIndexToAnimate;
+    Direction                 mIndexDirection;
 
 
 
     // LOGIC Part
-    static const sf::Vector2f GridPos;
 
-    string                  mStrInput;
-    int **                  mConfiguration;
-    string                  mSolution;
+    string                    mStrInput;
+    int **                    mConfiguration;
+    string                    mSolution;
 
-    bool                    mIsGettingInput;
-    bool                    mHasSolutionReady;
-    bool                    mIsAnimating;
+    bool                      mIsGettingInput;
+    bool                      mHasSolutionReady;
+    bool                      mIsAnimating;
 
 };
 

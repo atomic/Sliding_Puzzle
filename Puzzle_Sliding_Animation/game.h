@@ -94,7 +94,6 @@ private:
 
     string                    mStrInput;
     int **                    mConfiguration;
-    vector<vector<int>>       mNewConfiguration;
     string                    mSolution;
 
     bool                      mIsGettingInput;

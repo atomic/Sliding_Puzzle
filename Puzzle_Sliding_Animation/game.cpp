@@ -59,7 +59,7 @@ Game::Game()
     mTextSolution.setPosition(12,50); mTextSolution.setScale(0.5,0.5); mTextSolution.setColor(sf::Color::Blue);
     // set the configuration for direction text displays
     mTextDirection.setFont(mFontGui); mTextDirection.setString(
-                "space : Input combination\nBackSpace : Reset\nEnter : get solution\n/ : animate");
+                "space : Input combination\nBackSpace : Reset\nEnter : get solution\n/ : animate\nESC : Quit");
     mTextDirection.setPosition(12,90);
     mTextInput.setColor(sf::Color::Red); mTextDirection.setScale(0.5, 0.5);
 
@@ -95,7 +95,13 @@ void Game::run()
 
 void Game::reset()
 {
-    // TODO : After fixing everything
+    mTextSolution.setString("Reseted !");
+    mTextInput.setString("");
+    mIsGettingInput = true;
+    mSolution.clear(); mStrInput.clear(); mHasSolutionReady = false;
+    mStep = 0; aStep = 0; mIndexToAnimate = -1;
+    mZeroIndexes.clear();
+    mMovingSequence.clear(); mIsAnimating = false;
 }
 
 /**
@@ -134,10 +140,10 @@ void Game::processEvents()
  */
 void Game::handlePlayerInput(sf::Keyboard::Key key, bool isPressed)
 {
-    if (key == sf::Keyboard::Escape)
+    if (key == sf::Keyboard::Escape && isPressed)
         mWindow.close();
-    else if (key == sf::Keyboard::BackSpace)
-        mWindow.close();
+    else if (key == sf::Keyboard::BackSpace && isPressed)
+        reset();
     else if (key == sf::Keyboard::Space && isPressed)
         mIsGettingInput = true;
     else if (key == sf::Keyboard::Slash && isPressed)
@@ -162,6 +168,7 @@ void Game::handleNumberInput(sf::Keyboard::Key key)
     case sf::Keyboard::Num8: mStrInput += to_string(8); break;
     case sf::Keyboard::Num9: mStrInput += to_string(9); break;
     case sf::Keyboard::Space: mIsGettingInput = false;  break;
+    case sf::Keyboard::Escape: mIsGettingInput = false;  break;
     case sf::Keyboard::Return:
         mIsGettingInput = prepareSolution() ? false : true;
         mHasSolutionReady = !mIsGettingInput;

@@ -4,6 +4,8 @@
 #include <list>
 #include "node.h"
 
+namespace Puzzle {
+
 class Sliding_Puzzle
 {
 public:
@@ -13,10 +15,10 @@ public:
     }
     
     void play(); 
+    Node getSolution();
 
 private:
     bool complete();
-    Node getSolution();
     Node puzzle;   
     list<Node> status_list;
 };
@@ -86,5 +88,7 @@ void Sliding_Puzzle::play(){
     cout << "The puzzle     is " << puzzle.data << " has been solved!" << endl;
     cout << "The play order is " << final.order << endl;
     cout << "The total step is " << final.step  << endl;
+}
+
 }
 #endif // SLIDING_PUZZLE_H

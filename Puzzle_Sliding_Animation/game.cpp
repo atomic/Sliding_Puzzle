@@ -1,4 +1,5 @@
 #include "game.h"
+#include "../slidingpuzzle/sliding_puzzle.h"
 
 const sf::Vector2f Game::GridPos = sf::Vector2f(280,20);
 const int Game::FrameThickness = 5;
@@ -11,7 +12,8 @@ const sf::Time Game::TimePerFrame = sf::seconds(1.f/60.f);
 Game::Game()
     : mWindow(sf::VideoMode(450,200), "SFML Application", sf::Style::Close),
       mStepDone(0), mStrInput(""),
-      mConfiguration(new int*[3]), mIsGettingInput(false), mIsAnimating(false)
+      mConfiguration(new int*[3]), mIsGettingInput(false),
+      mHasSolutionReady(false), mIsAnimating(false)
 {
     // get resources
     mFontGui.loadFromFile("../Sliding_Puzzle/Resources/proximanova.ttf");
@@ -31,7 +33,7 @@ Game::Game()
     mBoxCombInput.setFillColor(sf::Color::Cyan); mBoxCombInput.setOutlineColor(sf::Color::Red);
     mBoxCombInput.setPosition(sf::Vector2f(10,10));
     // Set the configuration for solution text box
-    mBoxSolution.setSize(sf::Vector2f(250,35));
+    mBoxSolution.setSize(sf::Vector2f(250,26));
     mBoxSolution.setFillColor(sf::Color::Yellow);
     mBoxSolution.setPosition(sf::Vector2f(10,50));
     // set the configuration for frame box
@@ -43,22 +45,22 @@ Game::Game()
     mBoxPuzzleFrame.setOutlineThickness(FrameThickness);
 
 
-    // set the configuration for text displays
+    // set the configuration for input text displays
     mTextInput.setFont(mFontGui);     mTextInput.setString(" your combination ");
     mTextInput.setPosition(12,10);    mTextInput.setScale(0.9,0.9);
-
+    // set the configuration for solution text displays
     mTextSolution.setFont(mFontGui);  mTextSolution.setString("solution");
-    mTextSolution.setPosition(12,50); mTextSolution.setScale(0.9,0.9); mTextSolution.setColor(sf::Color::Blue);
-
-    mTextDirection.setFont(mFontGui); mTextDirection.setString("space : change combination\nenter : get solution\n/ : animate");
+    mTextSolution.setPosition(12,50); mTextSolution.setScale(0.5,0.5); mTextSolution.setColor(sf::Color::Blue);
+    // set the configuration for direction text displays
+    mTextDirection.setFont(mFontGui); mTextDirection.setString(
+                "space : Input combination\nBS : Reset\nEnter : get solution\n/ : animate");
     mTextDirection.setPosition(12,90);
     mTextInput.setColor(sf::Color::Red); mTextDirection.setScale(0.5, 0.5);
 
-
     // initialize space for my int-configuration of the puzzle ground
-    mConfiguration[0] = new int[3] {8,1,2};
+    mConfiguration[0] = new int[3] {0,1,2};
     mConfiguration[1] = new int[3] {3,4,5};
-    mConfiguration[2] = new int[3] {6,7,0};
+    mConfiguration[2] = new int[3] {6,7,8};
 
 }
 
@@ -96,16 +98,15 @@ void Game::processEvents()
         switch (event.type)
         {
         case sf::Event::KeyPressed:
-            if(mIsGettingInput)
+            if(mIsGettingInput && !mIsAnimating)
                 handleNumberInput(event.key.code);
             else handlePlayerInput(event.key.code, true);
             break;
 
         case sf::Event::KeyReleased:
-            if(!mIsGettingInput)       // Prevent doing crazy stuffs when getting input
+            if(!mIsGettingInput && !mIsAnimating) // Prevent doing crazy stuffs when getting input
                 handlePlayerInput(event.key.code, false);
             break;
-
         case sf::Event::Closed:
             mWindow.close();
             break;
@@ -125,10 +126,8 @@ void Game::handlePlayerInput(sf::Keyboard::Key key, bool isPressed)
         mWindow.close();
     else if (key == sf::Keyboard::Space && isPressed)
         mIsGettingInput = true;
-    else if (key == sf::Keyboard::Return)
-        mWindow.close();
     else if (key == sf::Keyboard::Slash && isPressed)
-        mIsAnimating = !mIsAnimating;
+        if(mHasSolutionReady) activateAnimation();
 }
 
 /**
@@ -148,8 +147,13 @@ void Game::handleNumberInput(sf::Keyboard::Key key)
     case sf::Keyboard::Num7: mStrInput += to_string(7); break;
     case sf::Keyboard::Num8: mStrInput += to_string(8); break;
     case sf::Keyboard::Num9: mStrInput += to_string(9); break;
-    case sf::Keyboard::Space: mIsGettingInput = false; break;
-    case sf::Keyboard::Return: /* to be implemented */break;
+    case sf::Keyboard::Space: mIsGettingInput = false;  break;
+    case sf::Keyboard::Return:
+        mIsGettingInput = prepareSolution() ? false : true;
+        mHasSolutionReady = !mIsGettingInput;
+        if(mHasSolutionReady) syncConfigInput(); // solution is ready
+        break;
+    case sf::Keyboard::BackSpace: mStrInput.clear();    break;
     default:
         break;
     }
@@ -199,6 +203,70 @@ void Game::update(sf::Time elapsedTime)
     }
 }
 
+/// Sync input with display
+void Game::syncConfigInput()
+{
+    int i = 0;
+    for(auto c : mStrInput) {
+        mConfiguration[i/3][i%3] = atoi(&c);
+        i++;
+    }
+}
+
+/**
+ * @brief Will checks whether there exists solution yet and then activate animation
+ */
+bool Game::prepareSolution()
+{
+    string copyOfInput = mStrInput.substr();
+    sort(copyOfInput.begin(), copyOfInput.end());
+    // checks for solution existence
+    if(mStrInput.size() != 9) return false;
+    if(copyOfInput != "012345678") return false;
+
+    Puzzle::Sliding_Puzzle solveThis(mStrInput.c_str());
+    Puzzle::Node solution = solveThis.getSolution();
+    mSolution = solution.order;
+    mTextSolution.setString(solution.order + string(" (") + to_string(solution.step) + string(")"));
+    return true;
+}
+
+
+/**
+ * @pre   hasSolution is true, mSolution contains the order of solution
+ * @brief activate and ready the animation sequence
+ */
+void Game::activateAnimation()
+{
+    // find initial pos of 0 in configuration
+    int zero;
+    for(int n = 0; n < 9; n++) {
+        if(mConfiguration[n/3][n%3] == 0) { zero = n; break; }
+    }
+
+    // for the strings of solution, populate the vector mMovingSequence with the slides
+    for(auto N : mSolution)
+        mMovingSequence.push_back(getIndexBoxToMove(zero, N)); // zero will updates inside
+
+    // then start animation, and keep track of it.
+}
+
+/**
+ * @brief a function to render the animation of one box, and draw the rest static
+ */
+void Game::renderAnimation()
+{
+    // find from the first string, which box to animate
+    // draw everything, except that box, then draw that box with translation
+
+    // test animate one box first (move 5 down)
+    for (int n = 0; n < 9; ++n) {
+        if(mConfiguration[n / 3][n % 3] != 5)
+            mWindow.draw(mSpriteBoxes[n]);
+    }
+    mWindow.draw(mSpriteBoxes[5], mTranslateBox);
+}
+
 /**
  * @brief a function to draw objects
  */
@@ -221,34 +289,6 @@ void Game::render()
     mWindow.draw(mTextDirection);
     mWindow.display();
 }
-
-/**
- * @brief a function to render the animation of one box, and draw the rest static
- */
-void Game::renderAnimation()
-{
-    // find from the first string, which box to animate
-    // draw everything, except that box, then draw that box with translation
-
-    // test animate one box first (move 5 down)
-    for (int n = 0; n < 9; ++n) {
-        if(mConfiguration[n / 3][n % 3] != 5)
-            mWindow.draw(mSpriteBoxes[n]);
-    }
-    mWindow.draw(mSpriteBoxes[5], mTranslateBox);
-}
-
-
-/**
- * @brief Will checks whether there exists solution yet and then activate animation
- */
-void Game::activateAnimation()
-{
-    // checks for solution existence
-    // for the strings of solution, populate the vector mMovingSequence with the slides
-    // then start animation, and keep track of it.
-}
-
 
 /// some notes
 /// link for references : https://n-puzzle-solver.appspot.com/

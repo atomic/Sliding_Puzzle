@@ -3,6 +3,8 @@
 
 #include <SFML/Graphics.hpp>
 #include <array>
+#include <algorithm>
+//#include "../slidingpuzzle/sliding_puzzle.h"
 
 enum Direction {
     Up, Down, Left, Right
@@ -19,9 +21,11 @@ public:
 private:
     void					processEvents();
     void					update(sf::Time elapsedTime);
+    bool					prepareSolution();    /// input -> solution -> ready for animate
+    void					syncConfigInput();    /// sync display grid with input
+    void                    activateAnimation();  /// setting up animation mode
+    void					renderAnimation();    /// render each iteration
     void					render();
-    void					renderAnimation();
-    void					activateAnimation();
 
     void					handlePlayerInput(sf::Keyboard::Key key, bool isPressed);
     void					handleNumberInput(sf::Keyboard::Key key);
@@ -32,19 +36,13 @@ private:
      * @brief functio will takes a character and find out which position to move,
      *        and what direction
      */
-    pair<int,Direction>      getIndexBoxToMove(const char &c)
+    pair<int,Direction>      getIndexBoxToMove(int &zero, const char &c)
     {
-        int zero;
-        // find pos of 0 in configuration
-        for(int n = 0; n < 9; n++) {
-            if(mConfiguration[n/3][n%3] == 0) { zero = n; break; }
-        }
-
         switch (c) {
-        case 'D': return pair<int, Direction>(zero + 3, Up);  break;
-        case 'U': return pair<int, Direction>(zero - 3, Down);  break;
-        case 'L': return pair<int, Direction>(zero - 1, Right);  break;
-        case 'R': return pair<int, Direction>(zero + 1, Left);  break;
+        case 'D': zero += 3; return pair<int, Direction>(zero, Up);    break;
+        case 'U': zero -= 3; return pair<int, Direction>(zero, Down);  break;
+        case 'L': zero -= 1; return pair<int, Direction>(zero, Right); break;
+        case 'R': zero += 1; return pair<int, Direction>(zero, Left);  break;
         default:
             break;
         }
@@ -86,8 +84,10 @@ private:
 
     string                  mStrInput;
     int **                  mConfiguration;
+    string                  mSolution;
 
     bool                    mIsGettingInput;
+    bool                    mHasSolutionReady;
     bool                    mIsAnimating;
 
 };

@@ -4,6 +4,8 @@
 
 using namespace std;
 
+namespace Puzzle {
+
 class Node
 {
 public:
@@ -101,6 +103,8 @@ void Node::swap(char& i, char& j){
     char temp=i;
     i=j;
     j=temp;
+}
+
 }
 
 #endif // NODE_H

@@ -80,7 +80,8 @@ private:
     static const int          AnimSpeed;
     sf::Transform             mTranslateBox;
     float                     mFrameStepDone;     // For one frame
-    int                       mStep;     // For iteration step
+    int                       mStep;     // For iteration swapping
+    int                       aStep;     // For animation, ahead of mStep
 
     vector<pair<int,Direction>> mMovingSequence;
     vector<int>               mZeroIndexes; // just to make swapping easier
@@ -99,8 +100,7 @@ private:
     bool                      mIsGettingInput;
     bool                      mHasSolutionReady;
     bool                      mIsAnimating;
-
-    bool                      mDebugKey;
+    bool                      mDelayTemp; // test
 
 };
 

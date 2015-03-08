@@ -16,7 +16,7 @@ Game::Game()
       mFrameStepDone(0), mIndexToAnimate(-1), mIndexDirection(Up),
       mStrInput(""),
       mConfiguration(new int*[3]), mIsGettingInput(false),
-      mHasSolutionReady(false), mIsAnimating(false), mDebugKey(false)
+      mHasSolutionReady(false), mIsAnimating(false)
 {
     // get resources
     mFontGui.loadFromFile("../Sliding_Puzzle/Resources/proximanova.ttf");
@@ -142,8 +142,6 @@ void Game::handlePlayerInput(sf::Keyboard::Key key, bool isPressed)
         mIsGettingInput = true;
     else if (key == sf::Keyboard::Slash && isPressed)
         if(mHasSolutionReady) activateAnimation();
-    else if (key == sf::Keyboard::D && isPressed)
-        mDebugKey = !mDebugKey;
 }
 
 /**
@@ -205,6 +203,7 @@ void Game::syncConfigInput()
     }
 }
 
+
 /**
  * @brief Will checks whether there exists solution yet
  */
@@ -235,13 +234,14 @@ void Game::update(sf::Time elapsedTime)
     if(mIsGettingInput) mTextInput.setString(mStrInput);
 
     // do sliding animation
-    if(mIsAnimating && mFrameStepDone < 50)
+    if(mIsAnimating && mFrameStepDone < 50) {
         prepareAnimation(elapsedTime);
+    }
     else if(mIsAnimating && !isSequenceComplete()) {
         proceedSequence(); // update mFramestepdone, and other stuffs
         updateNextGrid(); // last grid does not get updated
         mFrameStepDone = 0;
-        mStep++;
+        mStep++; aStep++;
     }
     else {
         mIsAnimating = false;
@@ -256,8 +256,8 @@ void Game::update(sf::Time elapsedTime)
 void Game::proceedSequence()
 {
     // don't touch this anymore
-    mIndexToAnimate = mMovingSequence[mStep].first;
-    mIndexDirection = mMovingSequence[mStep].second;
+    mIndexToAnimate = mMovingSequence[aStep].first;
+    mIndexDirection = mMovingSequence[aStep].second;
 }
 
 /**
@@ -270,13 +270,11 @@ void Game::updateNextGrid()
     // ex : mIndexToAnimate = [ 3, 0, 1]
     // Update the correct gridview
 
-    // TODO :Debug, can't update last movement (solved)
     int prev_zero;
     int next_zero;
 
-    // BUG : swapped before giving animation a chance to draw
     prev_zero = mZeroIndexes[mStep];
-    next_zero = mZeroIndexes[mStep]; // THIS LINE
+    next_zero = mZeroIndexes[mStep + 1]; // BUG : THIS LINE, swap or animate, not both
     swap(mConfiguration[prev_zero/3][prev_zero%3],
             mConfiguration[next_zero/3][next_zero%3]);
     arrangeGrid();
@@ -284,7 +282,6 @@ void Game::updateNextGrid()
     // then we reset to their correct position
     mTranslateBox = sf::Transform::Identity; // reset the translation matrix
 }
-
 
 /**
  * @pre   hasSolution is true, mSolution contains the order of solution
@@ -304,11 +301,16 @@ void Game::activateAnimation()
         mZeroIndexes.push_back(zero); // we store twin series later making swapping easier
     }
 
+
     // then start animation, and keep track of it.
-    // by now sequence already populated with length mSolution.length()
-    // so, let's fill mStepLeft with mSolution.length()
-    mStep = 0;
+    // start aStep ahead of mStep
+    mIndexToAnimate = mMovingSequence[0].first;
+    mIndexDirection = mMovingSequence[0].second;
+    aStep = 1; // aStep is used to keep track of animation logic, ahead of mStep
+
+    mStep = 0; // mStep is used to keep track of swapping logic
     mIsAnimating = true; // this should signal next update to start sequence animation
+    mDelayTemp = true;   // this will delay the swap by one step
 }
 
 /**

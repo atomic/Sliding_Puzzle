@@ -24,6 +24,9 @@ Game::Game()
                              sf::IntRect(0,0,150,150));// start at from the pic, grab 32x32
 
     mSpriteBoxes.push_back(sf::Sprite()); // sprite for empty box, we never draw this
+    mSpriteBoxes[0].setTexture(mTextureBox); // DEBUG purposes
+    mSpriteBoxes[0].setTextureRect(sf::IntRect( (8 % 3)*50, (8 / 3)*50, 50, 50));
+
     // Fill vector of sprite with numbered boxes
     for (int i = 0; i < 8; ++i) {
         mSpriteBoxes.push_back(sf::Sprite());
@@ -192,31 +195,7 @@ void Game::arrangeGrid()
     }
 }
 
-/**
- * @brief update informations to next thread
- */
-void Game::update(sf::Time elapsedTime)
-{
-    // Color the input text box outline
-    mBoxCombInput.setOutlineThickness(mIsGettingInput ? 3 : 0);
-    if(mIsGettingInput) mTextInput.setString(mStrInput);
-
-    // do sliding animation
-    if(mIsAnimating && mFrameStepDone < 50)
-        prepareAnimation(elapsedTime);
-    else if(mIsAnimating && !isSequenceComplete()) {
-        proceedSequence(); // update mFramestepdone, and other stuffs
-        updateNextGrid();
-    }
-    else {
-        mIsAnimating = false;
-//        mTranslateBox = sf::Transform::Identity;
-        mFrameStepDone = 0; // reset here? hmm
-        // if not animating
-    }
-}
-
-/// Sync input with display
+/// Sync input with display grid
 void Game::syncConfigInput()
 {
     int i = 0;
@@ -239,7 +218,6 @@ bool Game::prepareSolution()
     // up to this point, input is valid
     syncConfigInput();
     arrangeGrid();
-
     Puzzle::Sliding_Puzzle solveThis(mStrInput.c_str());
     Puzzle::Node solution = solveThis.getSolution();
     mSolution = solution.order;
@@ -248,21 +226,43 @@ bool Game::prepareSolution()
 }
 
 /**
+ * @brief update informations to next thread
+ */
+void Game::update(sf::Time elapsedTime)
+{
+    // Color the input text box outline
+    mBoxCombInput.setOutlineThickness(mIsGettingInput ? 3 : 0);
+    if(mIsGettingInput) mTextInput.setString(mStrInput);
+
+    // do sliding animation
+    if(mIsAnimating && mFrameStepDone < 50)
+        prepareAnimation(elapsedTime);
+    else if(mIsAnimating && !isSequenceComplete()) {
+        proceedSequence(); // update mFramestepdone, and other stuffs
+        updateNextGrid(); // last grid does not get updated
+        mFrameStepDone = 0;
+        mStep++;
+    }
+    else {
+        mIsAnimating = false;
+    }
+}
+
+
+/**
  * NOTE : This should be run first before every animation
  * @brief Check for sequence to animate
  */
 void Game::proceedSequence()
 {
+    // don't touch this anymore
     mIndexToAnimate = mMovingSequence[mStep].first;
     mIndexDirection = mMovingSequence[mStep].second;
-
-    mStep++;
-    mFrameStepDone = 0;
-
 }
 
 /**
   * @brief Update next grid, this should run after proceedSequence
+  *
   */
 void Game::updateNextGrid()
 {
@@ -270,20 +270,19 @@ void Game::updateNextGrid()
     // ex : mIndexToAnimate = [ 3, 0, 1]
     // Update the correct gridview
 
-    // TODO :Debug
+    // TODO :Debug, can't update last movement (solved)
     int prev_zero;
     int next_zero;
-    if(mStep != 0) { // by the time it gets here, mIndexAnimate still store mStep[0] value
-        prev_zero = mZeroIndexes[mStep - 1];
-        next_zero = mZeroIndexes[mStep];
-        swap(mConfiguration[prev_zero/3][prev_zero%3],
-                mConfiguration[next_zero/3][next_zero%3]);
-        arrangeGrid();
-    }
+
+    // BUG : swapped before giving animation a chance to draw
+    prev_zero = mZeroIndexes[mStep];
+    next_zero = mZeroIndexes[mStep]; // THIS LINE
+    swap(mConfiguration[prev_zero/3][prev_zero%3],
+            mConfiguration[next_zero/3][next_zero%3]);
+    arrangeGrid();
 
     // then we reset to their correct position
-    mTranslateBox = sf::Transform::Identity; // reset the boxes position
-
+    mTranslateBox = sf::Transform::Identity; // reset the translation matrix
 }
 
 
@@ -310,7 +309,6 @@ void Game::activateAnimation()
     // so, let's fill mStepLeft with mSolution.length()
     mStep = 0;
     mIsAnimating = true; // this should signal next update to start sequence animation
-    proceedSequence(); // This may be buggy
 }
 
 /**
@@ -355,22 +353,11 @@ void Game::render()
         int value_animate = mConfiguration[mIndexToAnimate/3][mIndexToAnimate%3];
         for (int n = 0; n < 9; ++n) {
             if(n != mIndexToAnimate)
-//                mWindow.draw(mSpriteBoxes[n]);
                 mWindow.draw(mSpriteBoxes[mConfiguration[n/3][n%3]]);
         }
         mWindow.draw(mSpriteBoxes[value_animate], mTranslateBox);
-//        mWindow.draw(mSpriteBoxes[4], mTranslateBox);
     }
 
-    // up, down, left, right
-//    mTranslateBox.rotate(0.30, 300, 50);
-//    mTranslateBox = sf::Transform::Identity; // use this to reset
-//    mTranslateBox.translate(0, -0.52);
-//    mTranslateBox.translate(0,  0.52);
-//    mTranslateBox.translate(-0.52, 0);
-//    mTranslateBox.translate( 0.52, 0);
-
-//    mWindow.draw(mSpriteBoxes[4],mTranslateBox);
     mWindow.display();
 }
 

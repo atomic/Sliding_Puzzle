@@ -80,7 +80,7 @@ private:
     static const int          AnimSpeed;
     sf::Transform             mTranslateBox;
     float                     mFrameStepDone;     // For one frame
-    int                       mStep;     // For one frame
+    int                       mStep;     // For iteration step
 
     vector<pair<int,Direction>> mMovingSequence;
     vector<int>               mZeroIndexes; // just to make swapping easier

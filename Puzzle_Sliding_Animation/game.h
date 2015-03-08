@@ -17,6 +17,7 @@ class Game : private sf::NonCopyable
 public:
     Game();
     void					run();
+    void					reset();
 
 private:
     void					processEvents();

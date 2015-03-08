@@ -1,5 +1,6 @@
 #include "game.h"
 #include "../slidingpuzzle/sliding_puzzle.h"
+#include <iostream>
 
 const sf::Vector2f Game::GridPos = sf::Vector2f(280,20);
 const int Game::FrameThickness = 5;
@@ -86,6 +87,11 @@ void Game::run()
         }
         render(); // graphics
     }
+}
+
+void Game::reset()
+{
+    // TODO : After fixing everything
 }
 
 /**
@@ -247,13 +253,22 @@ void Game::proceedSequence()
     // ex : mZeroIndex = [ 4, 3, 0, 1]
     // ex : mIndexToAnimate = [ 3, 0, 1]
     // Update the correct gridview
+
+    cout << "sequence " << mStep << endl;
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+             cout << mConfiguration[i][j];
+        }
+        cout << endl;
+    }
+
     int prev_zero;
     if(mStep != 0) { // by the time it gets here, mIndexAnimate still store mStep[0] value
         prev_zero = mZeroIndexes[mStep - 1];
         swap(mConfiguration[prev_zero/3, prev_zero%3],
                 mConfiguration[mIndexToAnimate/3, mIndexToAnimate%3]);
+        arrangeGrid();
     }
-    arrangeGrid();
 
     mIndexToAnimate = mMovingSequence[mStep].first;
     mIndexDirection = mMovingSequence[mStep].second;
@@ -267,8 +282,6 @@ void Game::proceedSequence()
 
     // then we reset to their correct position
     mTranslateBox = sf::Transform::Identity; // reset the boxes position
-    for(auto i : mSpriteBoxes)
-        mWindow.draw(i, mTranslateBox);
 }
 
 
@@ -329,6 +342,7 @@ void Game::render()
 
     mWindow.draw(mTextInput);
     mWindow.draw(mTextSolution);
+    mWindow.draw(mTextDirection);
 
     mWindow.draw(mBoxPuzzleFrame);
 
@@ -337,14 +351,13 @@ void Game::render()
         for(auto box : mSpriteBoxes)
             mWindow.draw(box); // if not animating, just draw static boxes
     } else {
-        // first render the static boxes
         for (int n = 0; n < 9; ++n) {
             if(mConfiguration[n / 3][n % 3] != mIndexToAnimate)
                 mWindow.draw(mSpriteBoxes[n]);
         }
         mWindow.draw(mSpriteBoxes[mIndexToAnimate], mTranslateBox);
     }
-    mWindow.draw(mTextDirection);
+
     mWindow.display();
 }
 

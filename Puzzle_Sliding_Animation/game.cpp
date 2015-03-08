@@ -5,6 +5,7 @@
 const sf::Vector2f Game::GridPos = sf::Vector2f(280,20);
 const int Game::FrameThickness = 5;
 const sf::Time Game::TimePerFrame = sf::seconds(1.f/60.f);
+const int Game::AnimSpeed = 90;
 
 /**
  * @brief Constructor to set the size of windows
@@ -15,7 +16,7 @@ Game::Game()
       mFrameStepDone(0), mIndexToAnimate(-1), mIndexDirection(Up),
       mStrInput(""),
       mConfiguration(new int*[3]), mIsGettingInput(false),
-      mHasSolutionReady(false), mIsAnimating(false)
+      mHasSolutionReady(false), mIsAnimating(false), mDebugKey(false)
 {
     // get resources
     mFontGui.loadFromFile("../Sliding_Puzzle/Resources/proximanova.ttf");
@@ -27,7 +28,7 @@ Game::Game()
     for (int i = 0; i < 8; ++i) {
         mSpriteBoxes.push_back(sf::Sprite());
         mSpriteBoxes[i+1].setTexture(mTextureBox);
-        mSpriteBoxes[i+1].setTextureRect(sf::IntRect( (i%3)*50, (i/3)*50, 50, 50));
+        mSpriteBoxes[i+1].setTextureRect(sf::IntRect( (i % 3)*50, (i / 3)*50, 50, 50));
     }
 
     // Set the configuration for input text box
@@ -106,7 +107,7 @@ void Game::processEvents()
         switch (event.type)
         {
         case sf::Event::KeyPressed:
-            if(mIsGettingInput && !mIsAnimating)
+            if(mIsGettingInput)
                 handleNumberInput(event.key.code);
             else handlePlayerInput(event.key.code, true);
             break;
@@ -138,6 +139,8 @@ void Game::handlePlayerInput(sf::Keyboard::Key key, bool isPressed)
         mIsGettingInput = true;
     else if (key == sf::Keyboard::Slash && isPressed)
         if(mHasSolutionReady) activateAnimation();
+    else if (key == sf::Keyboard::D && isPressed)
+        mDebugKey = !mDebugKey;
 }
 
 /**
@@ -181,7 +184,6 @@ void Game::arrangeGrid()
     ///  i/y
 
     int i, j;
-    // Loop the whole mConfiguration
     for(int N = 0; N < 9; N++) {
         i = N / 3; j = N % 3;
         if(mConfiguration[i][j] != 0)
@@ -204,10 +206,11 @@ void Game::update(sf::Time elapsedTime)
         prepareAnimation(elapsedTime);
     else if(mIsAnimating && !isSequenceComplete()) {
         proceedSequence(); // update mFramestepdone, and other stuffs
+        updateNextGrid();
     }
     else {
         mIsAnimating = false;
-        mTranslateBox = sf::Transform::Identity;
+//        mTranslateBox = sf::Transform::Identity;
         mFrameStepDone = 0; // reset here? hmm
         // if not animating
     }
@@ -250,40 +253,38 @@ bool Game::prepareSolution()
  */
 void Game::proceedSequence()
 {
-    // ex : mZeroIndex = [ 4, 3, 0, 1]
-    // ex : mIndexToAnimate = [ 3, 0, 1]
-    // Update the correct gridview
-
-    cout << "sequence " << mStep << endl;
-    for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 3; ++j) {
-             cout << mConfiguration[i][j];
-        }
-        cout << endl;
-    }
-
-    int prev_zero;
-    if(mStep != 0) { // by the time it gets here, mIndexAnimate still store mStep[0] value
-        prev_zero = mZeroIndexes[mStep - 1];
-        swap(mConfiguration[prev_zero/3, prev_zero%3],
-                mConfiguration[mIndexToAnimate/3, mIndexToAnimate%3]);
-        arrangeGrid();
-    }
-
     mIndexToAnimate = mMovingSequence[mStep].first;
     mIndexDirection = mMovingSequence[mStep].second;
 
     mStep++;
     mFrameStepDone = 0;
 
+}
 
-    // we should also change configuration and update the on screen changes here
-    // TODO
+/**
+  * @brief Update next grid, this should run after proceedSequence
+  */
+void Game::updateNextGrid()
+{
+    // ex : mZeroIndex = [ 4, 3, 0, 1]
+    // ex : mIndexToAnimate = [ 3, 0, 1]
+    // Update the correct gridview
+
+    // TODO :Debug
+    int prev_zero;
+    int next_zero;
+    if(mStep != 0) { // by the time it gets here, mIndexAnimate still store mStep[0] value
+        prev_zero = mZeroIndexes[mStep - 1];
+        next_zero = mZeroIndexes[mStep];
+        swap(mConfiguration[prev_zero/3][prev_zero%3],
+                mConfiguration[next_zero/3][next_zero%3]);
+        arrangeGrid();
+    }
 
     // then we reset to their correct position
     mTranslateBox = sf::Transform::Identity; // reset the boxes position
-}
 
+}
 
 
 /**
@@ -318,7 +319,7 @@ void Game::activateAnimation()
  */
 void Game::prepareAnimation(sf::Time elapsedTime)
 {
-    float frame_delta = 50*elapsedTime.asSeconds();
+    float frame_delta = AnimSpeed*elapsedTime.asSeconds();
     mFrameStepDone += frame_delta;
     // find out direction of animation
     switch (mIndexDirection) {
@@ -351,13 +352,25 @@ void Game::render()
         for(auto box : mSpriteBoxes)
             mWindow.draw(box); // if not animating, just draw static boxes
     } else {
+        int value_animate = mConfiguration[mIndexToAnimate/3][mIndexToAnimate%3];
         for (int n = 0; n < 9; ++n) {
-            if(mConfiguration[n / 3][n % 3] != mIndexToAnimate)
-                mWindow.draw(mSpriteBoxes[n]);
+            if(n != mIndexToAnimate)
+//                mWindow.draw(mSpriteBoxes[n]);
+                mWindow.draw(mSpriteBoxes[mConfiguration[n/3][n%3]]);
         }
-        mWindow.draw(mSpriteBoxes[mIndexToAnimate], mTranslateBox);
+        mWindow.draw(mSpriteBoxes[value_animate], mTranslateBox);
+//        mWindow.draw(mSpriteBoxes[4], mTranslateBox);
     }
 
+    // up, down, left, right
+//    mTranslateBox.rotate(0.30, 300, 50);
+//    mTranslateBox = sf::Transform::Identity; // use this to reset
+//    mTranslateBox.translate(0, -0.52);
+//    mTranslateBox.translate(0,  0.52);
+//    mTranslateBox.translate(-0.52, 0);
+//    mTranslateBox.translate( 0.52, 0);
+
+//    mWindow.draw(mSpriteBoxes[4],mTranslateBox);
     mWindow.display();
 }
 

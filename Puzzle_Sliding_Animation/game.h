@@ -35,6 +35,8 @@ private:
     void                     arrangeGrid();
     bool                     isSequenceComplete() { return mStep == mSolution.length(); };
     void                     proceedSequence();       /// prepare for next animation sequence
+    void                     updateNextGrid();  /// intersession between one animation to another
+    void                     intSwap(int &A, int &B) { int temp = B; B = A; A = temp; }
     /**
      * @brief functio will takes a character and find out which position to move,
      *        and what direction
@@ -75,6 +77,7 @@ private:
 
     // Animation
     static const sf::Time	  TimePerFrame;
+    static const int          AnimSpeed;
     sf::Transform             mTranslateBox;
     float                     mFrameStepDone;     // For one frame
     int                       mStep;     // For one frame
@@ -90,11 +93,14 @@ private:
 
     string                    mStrInput;
     int **                    mConfiguration;
+    vector<vector<int>>       mNewConfiguration;
     string                    mSolution;
 
     bool                      mIsGettingInput;
     bool                      mHasSolutionReady;
     bool                      mIsAnimating;
+
+    bool                      mDebugKey;
 
 };
 

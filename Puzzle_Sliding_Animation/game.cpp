@@ -24,8 +24,8 @@ Game::Game()
                              sf::IntRect(0,0,150,150));// start at from the pic, grab 32x32
 
     mSpriteBoxes.push_back(sf::Sprite()); // sprite for empty box, we never draw this
-    mSpriteBoxes[0].setTexture(mTextureBox); // DEBUG purposes
-    mSpriteBoxes[0].setTextureRect(sf::IntRect( (8 % 3)*50, (8 / 3)*50, 50, 50));
+//    mSpriteBoxes[0].setTexture(mTextureBox); // DEBUG purposes
+//    mSpriteBoxes[0].setTextureRect(sf::IntRect( (8 % 3)*50, (8 / 3)*50, 50, 50));
 
     // Fill vector of sprite with numbered boxes
     for (int i = 0; i < 8; ++i) {
@@ -256,8 +256,10 @@ void Game::update(sf::Time elapsedTime)
 void Game::proceedSequence()
 {
     // don't touch this anymore
-    mIndexToAnimate = mMovingSequence[aStep].first;
-    mIndexDirection = mMovingSequence[aStep].second;
+    if(aStep < mSolution.length()) {
+        mIndexToAnimate = mMovingSequence[aStep].first;
+        mIndexDirection = mMovingSequence[aStep].second;
+    }
 }
 
 /**
@@ -266,10 +268,6 @@ void Game::proceedSequence()
   */
 void Game::updateNextGrid()
 {
-    // ex : mZeroIndex = [ 4, 3, 0, 1]
-    // ex : mIndexToAnimate = [ 3, 0, 1]
-    // Update the correct gridview
-
     int prev_zero;
     int next_zero;
 

@@ -1,5 +1,10 @@
-#ifndef NODE_H
-#define NODE_H
+#ifndef ANODE_H
+#define ANODE_H
+
+/**
+  * Changed filename to anode, instead of Node.h or node.h
+  * conflicts with Yekun's node.h file, see #ifndef NODE_H
+  */
 
 #include <iostream>
 #include <vector>
@@ -9,8 +14,8 @@
 
 using namespace std;
 
-namespace Alex {
-
+namespace Alex
+{
 //  No code written for equal operator (=)
 class Node
 {
@@ -141,7 +146,8 @@ bool Node::solve()
 {
     while(!nextMove());
 
-    display();
+    //not need
+    //display();
     cout << "Solution: " << _solution << endl;
     cout << "Number of steps: " << _steps << endl << endl;
 
@@ -168,7 +174,7 @@ void Node::display()
 {
     _board.display();
 }
+    
+} /* Alex */
 
-}
-
-#endif // NODE_H
+#endif // ANODE_H

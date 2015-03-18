@@ -1,6 +1,6 @@
 #include "game.h"
-#include "../slidingpuzzle/sliding_puzzle.h"
-#include <iostream>
+#include "yekun_solution/sliding_puzzle.h"
+#include "alex_solution/anode.h"
 
 const sf::Vector2f Game::GridPos = sf::Vector2f(280,20);
 const int Game::FrameThickness = 5;
@@ -254,7 +254,11 @@ bool Game::prepareSolution()
         mSolution = solution.order;
         mTextSolution.setString(solution.order + string(" (") + to_string(solution.step) + string(")"));
     } else {
-
+        using namespace Alex;
+        Node n(board(3, mStrInput.c_str()));
+        n.solve();
+        mSolution = n.solution();
+        mTextSolution.setString(mSolution + string(" (") + to_string(n.steps()) + string(")"));
     }
     return true;
 }

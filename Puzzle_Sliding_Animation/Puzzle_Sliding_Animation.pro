@@ -6,11 +6,11 @@ SOURCES += main.cpp \
 
 HEADERS += \
     game.h \
-    ../slidingpuzzle/node.h \
-    ../slidingpuzzle/sliding_puzzle.h \
-    ../alex_solution/Node.h \
-    ../alex_solution/board.h \
-    ../alex_solution/functions.h
+    yekun_solution/node.h \
+    yekun_solution/sliding_puzzle.h \
+    alex_solution/anode.h \
+    alex_solution/board.h \
+    alex_solution/functions.h
 
 CONFIG += c++11
 

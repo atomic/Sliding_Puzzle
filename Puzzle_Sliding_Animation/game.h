@@ -2,9 +2,8 @@
 #define GAME_H
 
 #include <SFML/Graphics.hpp>
-#include <array>
-#include <algorithm>
-//#include "../slidingpuzzle/sliding_puzzle.h"
+#include <cstdlib>
+#include <iostream>
 
 enum Direction {
     Up = -3, Down = 3, Left = -1, Right = 1
@@ -111,4 +110,8 @@ private:
 };
 
 #endif // GAME_H
-
+/// Notes:
+/// 1.Unvoled sequences
+///  470586312 (28 steps)
+/// 2. Performance Comparison
+///  427168035 (Yekun : 26 steps in ~4 seconds, 26 steps in ~7 seconds)

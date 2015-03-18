@@ -7,6 +7,8 @@
 
 using namespace std;
 
+namespace Alex {
+
 class board
 {
 public:
@@ -67,7 +69,7 @@ board::board(int rowSize, string start)
     //  initializes board
 
     _size = rowSize;
-    int _boardSize = boardSize();
+    size_t _boardSize = boardSize();
     _board = new int[_boardSize];
     _prevMove = NO_DIR;
 
@@ -87,7 +89,7 @@ board::board(int rowSize, string start)
         }
 
         //  sets up board to be equal to string
-        for (int i = 0; i < _boardSize; i++)
+        for (size_t i = 0; i < _boardSize; i++)
         {
             char c = start[i];
             int num = atoi(&c);
@@ -101,7 +103,7 @@ board::board(int rowSize, string start)
     {
         //  sets up intial correct board
         _zeroPos = _boardSize - 1;
-        for (int i = 0; i < _boardSize; i++)
+        for (size_t i = 0; i < _boardSize; i++)
         {
             if (i == _zeroPos)
                 _board[i] = 0;
@@ -272,6 +274,8 @@ board& board::operator=(const board& other)
 int board::boardSize()
 {
     return _size * _size;
+}
+
 }
 
 #endif // BOARD_H

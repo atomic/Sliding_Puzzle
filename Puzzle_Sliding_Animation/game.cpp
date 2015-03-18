@@ -13,10 +13,11 @@ const int Game::AnimSpeed = 90;
  */
 Game::Game()
     : mWindow(sf::VideoMode(450,200), "SFML Application", sf::Style::Close),
-      mFrameStepDone(0), mIndexToAnimate(-1), mIndexDirection(Up),
-      mStrInput(""),
-      mConfiguration(new int*[3]), mIsGettingInput(false),
-      mHasSolutionReady(false), mIsAnimating(false)
+      mFrameStepDone(0), mIsAnimating(false), mIndexToAnimate(-1), mIndexDirection(Up),
+      mDelayTime(50), mDelayPassed(0), mStrInput(""),
+      mConfiguration(new int*[3]),
+      mYekunWay(true),
+      mIsGettingInput(false), mHasSolutionReady(false)
 {
     // get resources
     mFontGui.loadFromFile("../Sliding_Puzzle/Resources/proximanova.ttf");
@@ -62,11 +63,18 @@ Game::Game()
                 "space : Input combination\nBackSpace : Reset\nEnter : get solution\n/ : animate");
     mTextDirection.setPosition(12,90);
     mTextInput.setColor(sf::Color::Red); mTextDirection.setScale(0.5, 0.5);
+    // set config for Yekun,Alex notification text
+    mTextYekun.setFont(mFontGui);     mTextYekun.setString("Yekun");
+    mTextYekun.setPosition(22,164);   mTextYekun.setScale(0.7, 0.7); mTextYekun.setColor(sf::Color::Red);
+    mTextYekun.setStyle(sf::Text::Bold);
+    mTextAlex.setFont(mFontGui);     mTextAlex.setString("Alex");
+    mTextAlex.setPosition(110,164);   mTextAlex.setScale(0.5, 0.5);   mTextAlex.setColor(sf::Color::Magenta);
+
 
     // initialize space for my int-configuration of the puzzle ground
-    mConfiguration[0] = new int[3] {0,1,2};
-    mConfiguration[1] = new int[3] {3,4,5};
-    mConfiguration[2] = new int[3] {6,7,8};
+    mConfiguration[0] = new int[3] {1,2,3};
+    mConfiguration[1] = new int[3] {4,5,6};
+    mConfiguration[2] = new int[3] {7,8,0};
 
     arrangeGrid();
 }
@@ -93,9 +101,21 @@ void Game::run()
     }
 }
 
-void Game::reset()
+/**
+ * @brief Function to reset all items needed to animate, or inputs
+ * @param what
+ * @return none
+ */
+void Game::reset(bool clearInput, bool clearSolution)
 {
-    // TODO : After fixing everything
+
+    if (clearInput)    { mStrInput.clear(); mTextInput.setString(" --cleared-- ");    }
+    if (clearSolution) { mSolution.clear(); mTextSolution.setString(" --cleared-- "); mHasSolutionReady = false ;}
+
+    mZeroIndexes.clear();
+    mMovingSequence.clear();
+    mTranslateBox = sf::Transform::Identity; mFrameStepDone = 0; //mStep,aStep handled by animation
+    mBoxPuzzleFrame.setOutlineColor(sf::Color::Blue); mIsResetingDone = false; mDelayPassed = 0;
 }
 
 /**
@@ -134,14 +154,24 @@ void Game::processEvents()
  */
 void Game::handlePlayerInput(sf::Keyboard::Key key, bool isPressed)
 {
-    if (key == sf::Keyboard::Escape)
-        mWindow.close();
-    else if (key == sf::Keyboard::BackSpace)
-        mWindow.close();
-    else if (key == sf::Keyboard::Space && isPressed)
-        mIsGettingInput = true;
-    else if (key == sf::Keyboard::Slash && isPressed)
-        if(mHasSolutionReady) activateAnimation();
+    if (key == sf::Keyboard::Escape)                        mWindow.close();
+    else if (key == sf::Keyboard::BackSpace && isPressed)   reset();
+    else if (key == sf::Keyboard::Space && isPressed)       mIsGettingInput = true;
+    else if (key == sf::Keyboard::Tab && isPressed)     {
+        mYekunWay = !mYekunWay;
+        mTextAlex .setStyle(mYekunWay ? sf::Text::Regular : sf::Text::Bold);
+        mTextAlex .setColor(mYekunWay ? sf::Color::Magenta: sf::Color::Red);
+        mTextAlex .setScale(mYekunWay ? 0.5 : 0.8, mYekunWay ? 0.5 : 0.8);
+        mTextYekun.setStyle(mYekunWay ? sf::Text::Bold    : sf::Text::Regular);
+        mTextYekun.setColor(mYekunWay ? sf::Color::Red    : sf::Color::Magenta);
+        mTextYekun.setScale(mYekunWay ? 0.8 : 0.5, mYekunWay ? 0.8 : 0.5);
+    }
+    else if (key == sf::Keyboard::Slash && isPressed)   {
+        if(mHasSolutionReady)  {
+            activateAnimation();
+            mBoxPuzzleFrame.setOutlineColor(sf::Color::Green);
+        }
+    }
 }
 
 /**
@@ -217,10 +247,15 @@ bool Game::prepareSolution()
     // up to this point, input is valid
     syncConfigInput();
     arrangeGrid();
-    Puzzle::Sliding_Puzzle solveThis(mStrInput.c_str());
-    Puzzle::Node solution = solveThis.getSolution();
-    mSolution = solution.order;
-    mTextSolution.setString(solution.order + string(" (") + to_string(solution.step) + string(")"));
+
+    if(mYekunWay) {
+        Yekun::Sliding_Puzzle solveThis(mStrInput.c_str());
+        Yekun::Node solution = solveThis.getSolution();
+        mSolution = solution.order;
+        mTextSolution.setString(solution.order + string(" (") + to_string(solution.step) + string(")"));
+    } else {
+
+    }
     return true;
 }
 
@@ -236,15 +271,25 @@ void Game::update(sf::Time elapsedTime)
     // do sliding animation
     if(mIsAnimating && mFrameStepDone < 50) {
         prepareAnimation(elapsedTime);
-    }
-    else if(mIsAnimating && !isSequenceComplete()) {
+    } else if(mIsAnimating && !isSequenceComplete()) {
         proceedSequence(); // update mFramestepdone, and other stuffs
         updateNextGrid(); // last grid does not get updated
         mFrameStepDone = 0;
         mStep++; aStep++;
-    }
-    else {
+    } else if(mIsAnimating && isSequenceComplete()) {
+        // TODO: clear stuffs here
+        reset(false);
         mIsAnimating = false;
+        mBoxPuzzleFrame.setOutlineColor(sf::Color::Red);
+    }
+
+    if(!mIsResetingDone) {
+        if(mDelayPassed < mDelayTime)
+            mDelayPassed++;
+        else { // turn off delay
+            mIsResetingDone = true; mDelayPassed = 0;
+            mBoxPuzzleFrame.setOutlineColor(sf::Color::Red);
+        }
     }
 }
 
@@ -308,7 +353,6 @@ void Game::activateAnimation()
 
     mStep = 0; // mStep is used to keep track of swapping logic
     mIsAnimating = true; // this should signal next update to start sequence animation
-    mDelayTemp = true;   // this will delay the swap by one step
 }
 
 /**
@@ -342,6 +386,8 @@ void Game::render()
     mWindow.draw(mTextInput);
     mWindow.draw(mTextSolution);
     mWindow.draw(mTextDirection);
+    mWindow.draw(mTextYekun);
+    mWindow.draw(mTextAlex);
 
     mWindow.draw(mBoxPuzzleFrame);
 

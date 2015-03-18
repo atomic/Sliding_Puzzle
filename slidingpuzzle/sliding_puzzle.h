@@ -4,7 +4,7 @@
 #include <list>
 #include "node.h"
 
-namespace Puzzle {
+namespace Yekun {
 
 class Sliding_Puzzle
 {

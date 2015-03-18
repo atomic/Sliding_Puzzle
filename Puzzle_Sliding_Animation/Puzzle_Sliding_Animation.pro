@@ -7,7 +7,10 @@ SOURCES += main.cpp \
 HEADERS += \
     game.h \
     ../slidingpuzzle/node.h \
-    ../slidingpuzzle/sliding_puzzle.h
+    ../slidingpuzzle/sliding_puzzle.h \
+    ../alex_solution/Node.h \
+    ../alex_solution/board.h \
+    ../alex_solution/functions.h
 
 CONFIG += c++11
 

@@ -17,7 +17,7 @@ class Game : private sf::NonCopyable
 public:
     Game();
     void					run();
-    void					reset();
+    void					reset(bool clearInput = true, bool clearSolution = true);
 
 private:
     void					processEvents();
@@ -74,19 +74,27 @@ private:
     sf::Text                  mTextInput;
     sf::Text                  mTextSolution;
     sf::Text                  mTextDirection;
+    sf::Text                  mTextYekun;
+    sf::Text                  mTextAlex;
 
     // Animation
     static const sf::Time	  TimePerFrame;
     static const int          AnimSpeed;
     sf::Transform             mTranslateBox;
     float                     mFrameStepDone;     // For one frame
-    int                       mStep;     // For iteration swapping
-    int                       aStep;     // For animation, ahead of mStep
+    bool                      mIsAnimating;
+    size_t                    mStep;     // For iteration swapping
+    size_t                    aStep;     // For animation, ahead of mStep
 
     vector<pair<int,Direction>> mMovingSequence;
     vector<int>               mZeroIndexes; // just to make swapping easier
     int                       mIndexToAnimate;
     Direction                 mIndexDirection;
+
+    // Display
+    int                       mDelayTime; // to make the delay for some color changes(number in terms of frames?)
+    int                       mDelayPassed; // to make the delay for some color changes
+    bool                      mIsResetingDone;
 
 
 
@@ -94,13 +102,11 @@ private:
 
     string                    mStrInput;
     int **                    mConfiguration;
-    vector<vector<int>>       mNewConfiguration;
     string                    mSolution;
+    bool                      mYekunWay; // 2 different approaches
 
     bool                      mIsGettingInput;
     bool                      mHasSolutionReady;
-    bool                      mIsAnimating;
-    bool                      mDelayTemp; // test
 
 };
 

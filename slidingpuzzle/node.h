@@ -4,7 +4,7 @@
 
 using namespace std;
 
-namespace Puzzle {
+namespace Yekun {
 
 class Node
 {

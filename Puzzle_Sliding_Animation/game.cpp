@@ -9,7 +9,7 @@ const int          Game::GDim   = 200;
 const int          Game::GSIZE  = 600;
 const int Game::FrameThickness = 5;
 const sf::Time Game::TimePerFrame = sf::seconds(1.f/60.f);
-const int Game::AnimSpeed = 200;
+const int Game::AnimSpeed = 250;
 
 /**
  * @brief Constructor to set the size of windows
@@ -206,7 +206,7 @@ void Game::handleNumberInput(sf::Keyboard::Key key)
         mIsGettingInput   = mHasSolutionReady? false : true; // if no solution, don't exit input mode
         if(mHasSolutionReady) syncConfigInput(); // solution is ready
         else {
-            // print message about no possible solution
+            mTextSolution.setString("No Possible Solution");
         }
         break;
     case sf::Keyboard::BackSpace: mStrInput.clear();    break;

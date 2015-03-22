@@ -254,7 +254,7 @@ string board::randomize()
         move(getDir(rand() % MAX_MOVES));
     string strBoard;
     for (int i = 0; i < 9; ++i) {
-        strBoard += string(_board[i]);
+        strBoard += to_string(_board[i]);
     }
     return strBoard;
 }

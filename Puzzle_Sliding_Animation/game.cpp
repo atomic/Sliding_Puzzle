@@ -1,6 +1,7 @@
 #include "game.h"
 #include "yekun_solution/sliding_puzzle.h"
 #include "alex_solution/anode.h"
+#include "algol/solvability.h"
 
 const sf::Vector2f Game::SCREENSIZE = sf::Vector2f(1044,640);
 const sf::Vector2f Game::GridPos = sf::Vector2f(424,20);
@@ -163,8 +164,9 @@ void Game::handlePlayerInput(sf::Keyboard::Key key, bool isPressed)
 {
     if (key == sf::Keyboard::Escape)                        mWindow.close();
     else if (key == sf::Keyboard::BackSpace && isPressed)   reset();
-    else if (key == sf::Keyboard::Space && isPressed)       mIsGettingInput = true;
-    else if (key == sf::Keyboard::Tab && isPressed)     {
+    else if (key == sf::Keyboard::Space     && isPressed)   mIsGettingInput = true;
+    else if (key == sf::Keyboard::R         && isPressed)   getRandomInput();
+    else if (key == sf::Keyboard::Tab       && isPressed)   {
         mYekunWay = !mYekunWay;
         mTextAlex .setStyle(mYekunWay ? sf::Text::Regular : sf::Text::Bold);
         mTextAlex .setColor(mYekunWay ? sf::Color::Magenta: sf::Color::Red);
@@ -200,14 +202,29 @@ void Game::handleNumberInput(sf::Keyboard::Key key)
     case sf::Keyboard::Num9: mStrInput += to_string(9); break;
     case sf::Keyboard::Space: mIsGettingInput = false;  break;
     case sf::Keyboard::Return:
-        mIsGettingInput = prepareSolution() ? false : true;
-        mHasSolutionReady = !mIsGettingInput;
+        mHasSolutionReady = prepareSolution();
+        mIsGettingInput   = mHasSolutionReady? false : true; // if no solution, don't exit input mode
         if(mHasSolutionReady) syncConfigInput(); // solution is ready
+        else {
+            // print message about no possible solution
+        }
         break;
     case sf::Keyboard::BackSpace: mStrInput.clear();    break;
     default:
         break;
     }
+}
+
+/**
+ * @brief Function will be called when user press r,
+ *        Then, fill the input box with randomly generated combination
+ */
+void Game::getRandomInput()
+{
+    srand(time(NULL));
+    Alex::board b(3);
+    mStrInput = b.randomize();
+    mTextInput.setString(mStrInput);
 }
 
 /**
@@ -249,8 +266,9 @@ bool Game::prepareSolution()
     string copyOfInput = mStrInput.substr();
     sort(copyOfInput.begin(), copyOfInput.end());
     // checks for solution existence
-    if(mStrInput.size() != 9) return false;
-    if(copyOfInput != "012345678") return false;
+    if(mStrInput.size() != 9)             return false;
+    if(copyOfInput != "012345678")        return false; // see algol for way to check
+    if(!Algol::isSolvable(mStrInput))     return false; // if not solvable, return false
     // up to this point, input is valid
     syncConfigInput();
     arrangeGrid();

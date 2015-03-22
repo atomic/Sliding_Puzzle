@@ -29,6 +29,7 @@ private:
 
     void					handlePlayerInput(sf::Keyboard::Key key, bool isPressed);
     void					handleNumberInput(sf::Keyboard::Key key);
+    void					getRandomInput();
 
     // helper
     void                     arrangeGrid();

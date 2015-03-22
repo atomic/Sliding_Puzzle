@@ -10,7 +10,8 @@ HEADERS += \
     yekun_solution/sliding_puzzle.h \
     alex_solution/anode.h \
     alex_solution/board.h \
-    alex_solution/functions.h
+    alex_solution/functions.h \
+    algol/solvability.h
 
 CONFIG += c++11
 

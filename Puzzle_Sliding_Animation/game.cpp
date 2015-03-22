@@ -2,17 +2,20 @@
 #include "yekun_solution/sliding_puzzle.h"
 #include "alex_solution/anode.h"
 
-const sf::Vector2f Game::GridPos = sf::Vector2f(280,20);
+const sf::Vector2f Game::SCREENSIZE = sf::Vector2f(1044,640);
+const sf::Vector2f Game::GridPos = sf::Vector2f(424,20);
+const int          Game::GDim   = 200;
+const int          Game::GSIZE  = 600;
 const int Game::FrameThickness = 5;
 const sf::Time Game::TimePerFrame = sf::seconds(1.f/60.f);
-const int Game::AnimSpeed = 90;
+const int Game::AnimSpeed = 200;
 
 /**
  * @brief Constructor to set the size of windows
  *        and initialize objects
  */
 Game::Game()
-    : mWindow(sf::VideoMode(450,200), "SFML Application", sf::Style::Close),
+    : mWindow(sf::VideoMode(SCREENSIZE.x, SCREENSIZE.y), "SFML Application", sf::Style::Close),
       mFrameStepDone(0), mIsAnimating(false), mIndexToAnimate(-1), mIndexDirection(Up),
       mDelayTime(50), mDelayPassed(0), mStrInput(""),
       mConfiguration(new int*[3]),
@@ -21,48 +24,52 @@ Game::Game()
 {
     // get resources
     mFontGui.loadFromFile("../Sliding_Puzzle/Resources/proximanova.ttf");
-    mTextureBox.loadFromFile("../Sliding_Puzzle/Resources/mgrid.png",
-                             sf::IntRect(0,0,150,150));// start at from the pic, grab 32x32
+    mTextureBox.loadFromFile("../Sliding_Puzzle/Resources/mgrid_600.png",
+                             sf::IntRect(0,0,600,600));// start at from the pic, grab 32x32
 
     mSpriteBoxes.push_back(sf::Sprite()); // sprite for empty box, we never draw this
-//    mSpriteBoxes[0].setTexture(mTextureBox); // DEBUG purposes
-//    mSpriteBoxes[0].setTextureRect(sf::IntRect( (8 % 3)*50, (8 / 3)*50, 50, 50));
 
     // Fill vector of sprite with numbered boxes
     for (int i = 0; i < 8; ++i) {
         mSpriteBoxes.push_back(sf::Sprite());
         mSpriteBoxes[i+1].setTexture(mTextureBox);
-        mSpriteBoxes[i+1].setTextureRect(sf::IntRect( (i % 3)*50, (i / 3)*50, 50, 50));
+        mSpriteBoxes[i+1].setTextureRect(sf::IntRect( (i % 3)*GDim, (i / 3)*GDim, GDim, 200));
     }
 
-    // Set the configuration for input text box
-    mBoxCombInput.setSize(sf::Vector2f(250,35));
-    mBoxCombInput.setFillColor(sf::Color::Cyan); mBoxCombInput.setOutlineColor(sf::Color::Red);
-    mBoxCombInput.setPosition(sf::Vector2f(10,10));
-    // Set the configuration for solution text box
-    mBoxSolution.setSize(sf::Vector2f(250,26));
+    int spacing = 20; int box_w(320), box_h = 50;
+    // Set the configuration for INPUT TEXT BOX
+    mBoxCombInput.setSize(sf::Vector2f(box_w,box_h));
+    mBoxCombInput.setFillColor(sf::Color::Cyan);        mBoxCombInput.setOutlineColor(sf::Color::Red);
+    mBoxCombInput.setPosition(sf::Vector2f(30, spacing));
+
+    // Set the configuration for SOLUTION TEXT BOX
+    mBoxSolution.setSize(sf::Vector2f(box_w,box_h));
     mBoxSolution.setFillColor(sf::Color::Yellow);
-    mBoxSolution.setPosition(sf::Vector2f(10,50));
-    // set the configuration for frame box
-    mBoxPuzzleFrame.setSize(sf::Vector2f(150 + FrameThickness*2,150 + FrameThickness*2));
+    mBoxSolution.setPosition(sf::Vector2f(30,box_h + spacing*2));
+
+    // set the configuration for PUZZLE_FRAME BOX
+    mBoxPuzzleFrame.setSize(sf::Vector2f(GSIZE + FrameThickness*2,GSIZE + FrameThickness*2));
     mBoxPuzzleFrame.setPosition(GridPos.x - FrameThickness, GridPos.y - FrameThickness);
-//    mBoxPuzzleFrame.setPosition(GridPos.x - FrameThickness/2, GridPos.y - FrameThickness/2);
     mBoxPuzzleFrame.setFillColor(sf::Color(214,214,238));
     mBoxPuzzleFrame.setOutlineColor(sf::Color::Red);
     mBoxPuzzleFrame.setOutlineThickness(FrameThickness);
 
 
-    // set the configuration for input text displays
+    // set the configuration for INPUT TEXT DISPLAYS
     mTextInput.setFont(mFontGui);     mTextInput.setString(" your combination ");
-    mTextInput.setPosition(12,10);    mTextInput.setScale(0.9,0.9);
-    // set the configuration for solution text displays
+    mTextInput.setPosition(32,spacing);    mTextInput.setScale(0.9,0.9);
+
+    // set the configuration for SOLUTION TEXT DISPLAYS
     mTextSolution.setFont(mFontGui);  mTextSolution.setString("solution");
-    mTextSolution.setPosition(12,50); mTextSolution.setScale(0.5,0.5); mTextSolution.setColor(sf::Color::Blue);
-    // set the configuration for direction text displays
+    mTextSolution.setPosition(32,box_h + spacing*2);
+    mTextSolution.setScale(0.5,0.5); mTextSolution.setColor(sf::Color::Blue);
+
+    // set the configuration for DIRECTION TEXT DISPLAYS
     mTextDirection.setFont(mFontGui); mTextDirection.setString(
-                "space : Input combination\nBackSpace : Reset\nEnter : get solution\n/ : animate");
-    mTextDirection.setPosition(12,90);
-    mTextInput.setColor(sf::Color::Red); mTextDirection.setScale(0.5, 0.5);
+                "space : Input combination\nBackSpace : Reset\nr : Randomize\nEnter : get solution\n/ : animate");
+    mTextDirection.setPosition(23,200);
+    mTextInput.setColor(sf::Color::Red); mTextDirection.setScale(0.9, 0.9);
+
     // set config for Yekun,Alex notification text
     mTextYekun.setFont(mFontGui);     mTextYekun.setString("Yekun");
     mTextYekun.setPosition(22,164);   mTextYekun.setScale(0.7, 0.7); mTextYekun.setColor(sf::Color::Red);
@@ -218,8 +225,8 @@ void Game::arrangeGrid()
     for(int N = 0; N < 9; N++) {
         i = N / 3; j = N % 3;
         if(mConfiguration[i][j] != 0)
-            mSpriteBoxes[mConfiguration[i][j]].setPosition(GridPos.x + j*50,
-                                                       GridPos.y + i*50);
+            mSpriteBoxes[mConfiguration[i][j]].setPosition(GridPos.x + j*GDim,
+                                                       GridPos.y + i*GDim);
     }
 }
 
@@ -273,7 +280,7 @@ void Game::update(sf::Time elapsedTime)
     if(mIsGettingInput) mTextInput.setString(mStrInput);
 
     // do sliding animation
-    if(mIsAnimating && mFrameStepDone < 50) {
+    if(mIsAnimating && mFrameStepDone < GDim) {
         prepareAnimation(elapsedTime);
     } else if(mIsAnimating && !isSequenceComplete()) {
         proceedSequence(); // update mFramestepdone, and other stuffs

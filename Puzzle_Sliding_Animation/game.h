@@ -53,6 +53,9 @@ private:
     };
 
 private:
+    static const sf::Vector2f SCREENSIZE;
+    static const int          GDim;
+    static const int          GSIZE;
     sf::RenderWindow		  mWindow;
 
     // Resources

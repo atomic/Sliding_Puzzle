@@ -45,11 +45,11 @@ public:
     //      checks if board is a solved board
     //      returns true or false
 
-    void randomize();
+    string randomize();
     //  Pre-condition:
     //      highly preferred to have srand called in main
     //  Post-condition:
-    //      board has been randomized
+    //      board has been randomized, return string
 
     int boardSize();
     //  Post-condition:
@@ -244,11 +244,19 @@ bool board::isSolved()
     return true;
 }
 
-void board::randomize()
+/**
+ * @brief Extend fucntionality of function to return string representation of the board
+ */
+string board::randomize()
 {
     //  200 random moves
     for (int i = 0; i < 200; i++)
         move(getDir(rand() % MAX_MOVES));
+    string strBoard;
+    for (int i = 0; i < 9; ++i) {
+        strBoard += string(_board[i]);
+    }
+    return strBoard;
 }
 
 void board::copy(const board &other)

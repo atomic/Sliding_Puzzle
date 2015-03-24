@@ -45,11 +45,11 @@ public:
     //      checks if board is a solved board
     //      returns true or false
 
-    void randomize();
+    string randomize();
     //  Pre-condition:
     //      highly preferred to have srand called in main
     //  Post-condition:
-    //      board has been randomized
+    //      board has been randomized, return string
 
     int boardSize();
     //  Post-condition:
@@ -81,7 +81,7 @@ board::board(int rowSize, string start)
     //  initializes board
 
     _size = rowSize;
-    int _boardSize = boardSize();
+    size_t _boardSize = boardSize();
     _board = new int[_boardSize];
     _prevMove = NO_DIR;
 
@@ -101,7 +101,7 @@ board::board(int rowSize, string start)
         }
 
         //  sets up board to be equal to string
-        for (int i = 0; i < _boardSize; i++)
+        for (size_t i = 0; i < _boardSize; i++)
         {
             char c = start[i];
             int num = atoi(&c);
@@ -115,7 +115,7 @@ board::board(int rowSize, string start)
     {
         //  sets up intial correct board
         _zeroPos = _boardSize - 1;
-        for (int i = 0; i < _boardSize; i++)
+        for (size_t i = 0; i < _boardSize; i++)
         {
             if (i == _zeroPos)
                 _board[i] = 0;
@@ -256,11 +256,17 @@ bool board::isSolved()
     return true;
 }
 
-void board::randomize()
+string board::randomize()
 {
     //  200 random moves
     for (int i = 0; i < 200; i++)
         move(getDir(rand() % MAX_MOVES));
+        
+    string strBoard;		
+    for (int i = 0; i < 9; ++i) {		
+        strBoard += to_string(_board[i]);		
+    }		
+    return strBoard;
 }
 
 void board::copy(const board &other)

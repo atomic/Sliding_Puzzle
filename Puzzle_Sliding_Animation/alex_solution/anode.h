@@ -30,6 +30,13 @@ public:
     //      _steps now has the number of moves required to reach a solved board
     //      allocated memory is freed up
 
+    bool hSolve();
+    //  solves the board
+    //  Post-conditin
+    //      _solution now has the moves required to reach a solved board
+    //      _steps now has the number of moves required to reach a solved board
+    //      allocated memory is freed up
+
     string solution();
     //  returns the moves required to reach a solved board
 
@@ -39,6 +46,17 @@ public:
     void display();
     //  displays _board to console
 
+    void randomize();
+    //  Post-condition:
+    //      randomizes the _board
+    //      deletes _solution
+    //      deletes _steps
+
+    int h();
+    //  Post-condition:
+    //      returns the manhattan distance
+    //      (underestimate of the steps
+    //      from current board to goal board)
 
 private:
     board _board;
@@ -54,6 +72,12 @@ private:
     //  Post-condition:
     //      The tree of board combinations has increased by a depth of 1
     //      for all next possible moves
+
+    bool hNextMove();
+    //  RECURSIVE HEURISTIC BOARD SOLVER
+    //  Post-condition:
+    //      The "best" way to complete a board
+
 
     void Delete(Node& v);
     //  RECURSIVE DELETE
@@ -78,6 +102,7 @@ Node::~Node()
 bool Node::nextMove()
 {
     int size = _nextMoves.size();
+
     //  BASE CASE
     if (size == 0)
     {
@@ -85,10 +110,10 @@ bool Node::nextMove()
         for (int i = 0; i < MAX_MOVES; i++)
         {
             DIR d = getDir(i);
+            DIR prevMove = _board._prevMove;
 
-            if (_board.canMove(d) && d != opposite(_board._prevMove))
+            if (_board.canMove(d) && d != opposite(prevMove))
             {
-                DIR prevMove = _board._prevMove;
                 _board.move(d);
 
                 Node* next = new Node(_board);
@@ -110,16 +135,16 @@ bool Node::nextMove()
 
     //  RECURSION
     else
-    {
         //  CALLS NEXT MOVE FOR ALL BOARDS
         for (int i = 0; i < size; i++)
+        {
             if (_nextMoves[i]->nextMove())
             {
                 _steps = _nextMoves[i]->steps() + 1;
                 _solution = _nextMoves[i]->prevMove() + _nextMoves[i]->_solution;
                 return true;
             }
-    }
+        }
 
     return false;
 }
@@ -146,12 +171,87 @@ bool Node::solve()
 {
     while(!nextMove());
 
-    //not need
-    //display();
+    display();
     cout << "Solution: " << _solution << endl;
-    cout << "Number of steps: " << _steps << endl << endl;
+    cout << "Number of steps: " << _steps << endl;
+    cout << "Manhattan distance: " << h() << endl << endl;
 
     Delete(*this);
+}
+
+bool Node::hSolve()
+{
+    while(!hNextMove());
+
+    display();
+    cout << "Solution: " << _solution << endl;
+    cout << "Number of steps: " << _steps << endl;
+    cout << "Manhattan distance: " << h() << endl << endl;
+
+    //Delete(*this);
+}
+
+bool Node::hNextMove()
+{
+    int size = _nextMoves.size();
+
+    if (size == 0)
+    {
+        //  CREATES NEXT MOVES FOR CURRENT BOARD
+        for (int i = 0; i < MAX_MOVES; i++)
+        {
+            DIR d = getDir(i);
+            DIR prevMove = _board._prevMove;
+
+            if (_board.canMove(d) && d != opposite(prevMove))
+            {
+                _board.move(d);
+                //_board.display();
+
+                Node* next = new Node(_board);
+                _nextMoves.push_back(next);
+
+                if (_board.isSolved())
+                {
+                    _steps++;
+                    _solution += dirToChar(d);
+                    _board._prevMove = prevMove;
+                    return true;
+                }
+
+                _board.move(opposite(d));
+                _board._prevMove = prevMove;
+            }
+        }
+        //cout << "============" << endl;
+        size = _nextMoves.size();
+    }
+    else
+    {
+        int lowestH = _nextMoves[0]->h();
+        for (int i = 1; i < size; i++)
+        {
+            if (lowestH > _nextMoves[i]->h())
+            {
+                lowestH = _nextMoves[i]->h();
+            }
+        }
+
+
+        for (int i = 0; i < size; i++)
+        {
+            if (_nextMoves[i]->h() == lowestH)
+            {
+                if (_nextMoves[i]->hNextMove())
+                {
+                    _steps = _nextMoves[i]->steps() + 1;
+                    _solution = _nextMoves[i]->prevMove() + _nextMoves[i]->_solution;
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
 }
 
 string Node::prevMove()
@@ -174,7 +274,18 @@ void Node::display()
 {
     _board.display();
 }
-    
+
+void Node::randomize()
+{
+    _board.randomize();
+    _solution = "";
+    _steps = 0;
+}
+
+int Node::h()
+{
+    return _board.h();
+}
 } /* Alex */
 
 #endif // ANODE_H

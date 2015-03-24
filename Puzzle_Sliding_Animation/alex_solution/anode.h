@@ -278,11 +278,11 @@ void Node::display()
     _board.display();
 }
 
-void Node::randomize()
+string Node::randomize()
 {
-    _board.randomize();
     _solution = "";
     _steps = 0;
+    return _board.randomize();
 }
 
 int Node::h()

@@ -45,15 +45,21 @@ public:
     //      checks if board is a solved board
     //      returns true or false
 
-    string randomize();
+    void randomize();
     //  Pre-condition:
     //      highly preferred to have srand called in main
     //  Post-condition:
-    //      board has been randomized, return string
+    //      board has been randomized
 
     int boardSize();
     //  Post-condition:
     //      returns the size of the board (ie. 3x3 = board size of 9)
+
+    int h();
+    //  Post-condition:
+    //      returns the manhattan distance
+    //      (underestimate of the steps
+    //      from current board to goal board)
 
     void copy(const board& other);
     board& operator=(const board& other);
@@ -62,6 +68,12 @@ public:
     int* _board;
     int _zeroPos;
     DIR _prevMove;
+
+private:
+    int distance(int num, int pos);
+    //  Post-condition:
+    //      finds the distance from current position
+    //      to num's correct spot
 };
 
 board::board(int rowSize, string start)
@@ -69,7 +81,7 @@ board::board(int rowSize, string start)
     //  initializes board
 
     _size = rowSize;
-    size_t _boardSize = boardSize();
+    int _boardSize = boardSize();
     _board = new int[_boardSize];
     _prevMove = NO_DIR;
 
@@ -89,7 +101,7 @@ board::board(int rowSize, string start)
         }
 
         //  sets up board to be equal to string
-        for (size_t i = 0; i < _boardSize; i++)
+        for (int i = 0; i < _boardSize; i++)
         {
             char c = start[i];
             int num = atoi(&c);
@@ -103,7 +115,7 @@ board::board(int rowSize, string start)
     {
         //  sets up intial correct board
         _zeroPos = _boardSize - 1;
-        for (size_t i = 0; i < _boardSize; i++)
+        for (int i = 0; i < _boardSize; i++)
         {
             if (i == _zeroPos)
                 _board[i] = 0;
@@ -244,19 +256,11 @@ bool board::isSolved()
     return true;
 }
 
-/**
- * @brief Extend fucntionality of function to return string representation of the board
- */
-string board::randomize()
+void board::randomize()
 {
     //  200 random moves
     for (int i = 0; i < 200; i++)
         move(getDir(rand() % MAX_MOVES));
-    string strBoard;
-    for (int i = 0; i < 9; ++i) {
-        strBoard += to_string(_board[i]);
-    }
-    return strBoard;
 }
 
 void board::copy(const board &other)
@@ -282,6 +286,52 @@ board& board::operator=(const board& other)
 int board::boardSize()
 {
     return _size * _size;
+}
+
+int board::h()
+{
+    int dist = 0;
+    int _boardSize = boardSize();
+    for (int i = 0; i < _boardSize; i++)
+        dist += distance(_board[i], i);
+
+    return dist;
+}
+
+int board::distance(int num, int pos)
+{
+    if (num == 0)
+        return 0;
+
+    num--;
+    int dist = 0;
+    if (num == pos)
+        return 0;
+
+    int goalRow = num % _size;
+
+    while (goalRow > (pos % _size))
+    {
+        dist++;
+        pos++;
+    }
+    while (goalRow < (pos % _size))
+    {
+        dist++;
+        pos--;
+    }
+    while (num >= pos + 3)
+    {
+        pos += 3;
+        dist++;
+    }
+    while (num <= pos - 3)
+    {
+        pos -= 3;
+        dist++;
+    }
+
+    return dist;
 }
 
 }

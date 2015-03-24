@@ -14,13 +14,7 @@ class Node
 {
 public:
     Node() {}
-
-    Node(string initial) : 
-        data(initial), order(""), step(0)
-    {
-        pos=initial_zero_pos();
-    }
-
+    Node(string initial){data=initial; order=""; step=0; pos=initial_zero_pos();}
     string data;        //puzzle status
     string order;       //play order for completing the puzzle
     int pos;            //position of 0 (space)
@@ -32,11 +26,10 @@ public:
     void down();
     void left();
     void right();
-
+    int find_hvalue();
 private:
-
     void swap(char& i, char& j);
-
+    int single_hvalue(int index, char letter);
 };
 
 int Node::initial_zero_pos(){
@@ -107,6 +100,278 @@ void Node::swap(char& i, char& j){
     char temp=i;
     i=j;
     j=temp;
+}
+
+int Node::find_hvalue(){
+    int hvalue=0;
+    for (unsigned int i=0; i<=data.length()-1; i++){
+        hvalue=hvalue+single_hvalue(i, data[i]);
+    }
+    return hvalue;
+}
+
+int Node::single_hvalue(int index, char letter){
+    int hvalue=0;
+    if (letter=='1'){
+        switch (index){
+        case 0:
+            hvalue=0;
+            break;
+        case 1:
+            hvalue=1;
+            break;
+        case 2:
+            hvalue=2;
+            break;
+        case 3:
+            hvalue=1;
+            break;
+        case 4:
+            hvalue=2;
+            break;
+        case 5:
+            hvalue=3;
+            break;
+        case 6:
+            hvalue=2;
+            break;
+        case 7:
+            hvalue=3;
+            break;
+        case 8:
+            hvalue=4;
+            break;
+        default:
+            cout<<"Invalid index!"<<endl;
+        }
+    }else if (letter=='2'){
+        switch (index){
+        case 0:
+            hvalue=1;
+            break;
+        case 1:
+            hvalue=0;
+            break;
+        case 2:
+            hvalue=1;
+            break;
+        case 3:
+            hvalue=2;
+            break;
+        case 4:
+            hvalue=1;
+            break;
+        case 5:
+            hvalue=2;
+            break;
+        case 6:
+            hvalue=3;
+            break;
+        case 7:
+            hvalue=2;
+            break;
+        case 8:
+            hvalue=3;
+            break;
+        default:
+            cout<<"Invalid index!"<<endl;
+        }
+    }else if (letter=='3'){
+        switch (index){
+        case 0:
+            hvalue=2;
+            break;
+        case 1:
+            hvalue=1;
+            break;
+        case 2:
+            hvalue=0;
+            break;
+        case 3:
+            hvalue=3;
+            break;
+        case 4:
+            hvalue=2;
+            break;
+        case 5:
+            hvalue=1;
+            break;
+        case 6:
+            hvalue=4;
+            break;
+        case 7:
+            hvalue=3;
+            break;
+        case 8:
+            hvalue=2;
+            break;
+        default:
+            cout<<"Invalid index!"<<endl;
+        }
+    }else if (letter=='4'){
+        switch (index){
+        case 0:
+            hvalue=1;
+            break;
+        case 1:
+            hvalue=2;
+            break;
+        case 2:
+            hvalue=3;
+            break;
+        case 3:
+            hvalue=0;
+            break;
+        case 4:
+            hvalue=1;
+            break;
+        case 5:
+            hvalue=2;
+            break;
+        case 6:
+            hvalue=1;
+            break;
+        case 7:
+            hvalue=2;
+            break;
+        case 8:
+            hvalue=3;
+            break;
+        default:
+            cout<<"Invalid index!"<<endl;
+        }
+    }else if (letter=='5'){
+        switch (index){
+        case 0:
+            hvalue=2;
+            break;
+        case 1:
+            hvalue=1;
+            break;
+        case 2:
+            hvalue=2;
+            break;
+        case 3:
+            hvalue=1;
+            break;
+        case 4:
+            hvalue=0;
+            break;
+        case 5:
+            hvalue=1;
+            break;
+        case 6:
+            hvalue=2;
+            break;
+        case 7:
+            hvalue=1;
+            break;
+        case 8:
+            hvalue=2;
+            break;
+        default:
+            cout<<"Invalid index!"<<endl;
+        }
+    }else if (letter=='6'){
+        switch (index){
+        case 0:
+            hvalue=3;
+            break;
+        case 1:
+            hvalue=2;
+            break;
+        case 2:
+            hvalue=1;
+            break;
+        case 3:
+            hvalue=2;
+            break;
+        case 4:
+            hvalue=1;
+            break;
+        case 5:
+            hvalue=0;
+            break;
+        case 6:
+            hvalue=3;
+            break;
+        case 7:
+            hvalue=2;
+            break;
+        case 8:
+            hvalue=1;
+            break;
+        default:
+            cout<<"Invalid index!"<<endl;
+        }
+    }else if (letter=='7'){
+        switch (index){
+        case 0:
+            hvalue=2;
+            break;
+        case 1:
+            hvalue=3;
+            break;
+        case 2:
+            hvalue=4;
+            break;
+        case 3:
+            hvalue=1;
+            break;
+        case 4:
+            hvalue=2;
+            break;
+        case 5:
+            hvalue=3;
+            break;
+        case 6:
+            hvalue=0;
+            break;
+        case 7:
+            hvalue=1;
+            break;
+        case 8:
+            hvalue=2;
+            break;
+        default:
+            cout<<"Invalid index!"<<endl;
+        }
+    }else if (letter=='8'){
+        switch (index){
+        case 0:
+            hvalue=3;
+            break;
+        case 1:
+            hvalue=2;
+            break;
+        case 2:
+            hvalue=3;
+            break;
+        case 3:
+            hvalue=2;
+            break;
+        case 4:
+            hvalue=1;
+            break;
+        case 5:
+            hvalue=2;
+            break;
+        case 6:
+            hvalue=1;
+            break;
+        case 7:
+            hvalue=0;
+            break;
+        case 8:
+            hvalue=1;
+            break;
+        default:
+            cout<<"Invalid index!"<<endl;
+        }
+    }else{
+        hvalue=0;
+    }
+    return hvalue;
 }
 
 }

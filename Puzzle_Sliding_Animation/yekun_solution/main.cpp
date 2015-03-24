@@ -2,6 +2,7 @@
 #include "sliding_puzzle.h"
 
 using namespace std;
+using namespace Yekun;
 
 int main()
 {
@@ -9,7 +10,8 @@ int main()
     cout << "enter sequence to solve : ";
     cin >> prompt;
     Sliding_Puzzle puzzle(prompt.c_str());
-    puzzle.play();
+    //puzzle.play();
+    puzzle.heuristic_play();
     cout<<endl;
 }
 

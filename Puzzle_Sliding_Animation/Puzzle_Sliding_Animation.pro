@@ -23,6 +23,12 @@ LIBS += -L"/usr/loca/lib"
 CONFIG(release, debug|release): LIBS += -lsfml-audio -lsfml-graphics -lsfml-system -lsfml-network -lsfml-window
 CONFIG(debug  , debug|release): LIBS += -lsfml-audio -lsfml-graphics -lsfml-system -lsfml-network -lsfml-window
 
-INCLUDEPATH += "/usr/loca/include"
-DEPENDPATH += "/usr/loca/include"
 
+# INCLUDEPATH
+unix:INCLUDEPATH += "/usr/local/include"
+unix:DEPENDPATH += "/usr/local/include"
+
+# For windows, configure this based on where you install SFML
+# Alternatively, merge SFML library with where mingw is
+win32:INCLUDEPATH += "C:/sfml-2.2/include/"
+win32:DEPENDPATH += "C:/sfml-2.2/include/"

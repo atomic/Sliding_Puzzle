@@ -46,11 +46,12 @@ public:
     void display();
     //  displays _board to console
 
-    void randomize();
+    string randomize();
     //  Post-condition:
     //      randomizes the _board
     //      deletes _solution
     //      deletes _steps
+    //      returns string
 
     int h();
     //  Post-condition:
@@ -170,8 +171,9 @@ void Node::Delete(Node& v)
 bool Node::solve()
 {
     while(!nextMove());
-
-    display();
+    
+    //not needed
+    //display();
     cout << "Solution: " << _solution << endl;
     cout << "Number of steps: " << _steps << endl;
     cout << "Manhattan distance: " << h() << endl << endl;
@@ -183,7 +185,8 @@ bool Node::hSolve()
 {
     while(!hNextMove());
 
-    display();
+    //not needed
+    //display();
     cout << "Solution: " << _solution << endl;
     cout << "Number of steps: " << _steps << endl;
     cout << "Manhattan distance: " << h() << endl << endl;

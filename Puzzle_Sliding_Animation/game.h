@@ -24,9 +24,11 @@ private:
     bool					prepareSolution();    /// input -> solution -> ready for animate
     void					syncConfigInput();    /// sync display grid with input
     void                    activateAnimation();  /// setting up animation mode
+    void                    changeSession();         /// A function to randomize, solve, and animate
     void					prepareAnimation(sf::Time elapsedTime);    /// render each iteration
     void					render();
 
+    // inputs
     void					handlePlayerInput(sf::Keyboard::Key key, bool isPressed);
     void					handleNumberInput(sf::Keyboard::Key key);
     void					getRandomInput();
@@ -37,6 +39,8 @@ private:
     void                     proceedSequence();       /// prepare for next animation sequence
     void                     updateNextGrid();  /// intersession between one animation to another
     void                     intSwap(int &A, int &B) { int temp = B; B = A; A = temp; }
+    // Controller
+    void                     switchContinous();
     /**
      * @brief functio will takes a character and find out which position to move,
      *        and what direction
@@ -73,12 +77,17 @@ private:
     sf::RectangleShape        mBoxSolution;
     sf::RectangleShape        mBoxPuzzleFrame;
 
+    sf::RectangleShape        mBoxOff;
+    sf::RectangleShape        mBoxOn;
+
     // direction notices does not need boxes
     sf::Text                  mTextInput;
     sf::Text                  mTextSolution;
     sf::Text                  mTextDirection;
     sf::Text                  mTextYekun;
     sf::Text                  mTextAlex;
+    sf::Text                  mTextLoop;
+    sf::Text                  mTextOnOff;
 
     // Animation
     static const sf::Time	  TimePerFrame;
@@ -98,6 +107,8 @@ private:
     int                       mDelayTime; // to make the delay for some color changes(number in terms of frames?)
     int                       mDelayPassed; // to make the delay for some color changes
     bool                      mIsResetingDone;
+    int                       mPhaseCode; // this is used handle the phase in reseting new game
+                                    // -1 : no reset session, else handle it by calling newSession();
 
 
 
@@ -110,6 +121,7 @@ private:
 
     bool                      mIsGettingInput;
     bool                      mHasSolutionReady;
+    bool                      mIsContinous; // to make the puzzle randomize and run by itself
 
 };
 

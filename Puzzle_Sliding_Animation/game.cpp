@@ -18,10 +18,10 @@ const int Game::AnimSpeed = 250;
 Game::Game()
     : mWindow(sf::VideoMode(SCREENSIZE.x, SCREENSIZE.y), "SFML Application", sf::Style::Close),
       mFrameStepDone(0), mIsAnimating(false), mIndexToAnimate(-1), mIndexDirection(Up),
-      mDelayTime(50), mDelayPassed(0), mStrInput(""),
+      mDelayTime(50), mDelayPassed(0), mIsResetingDone(true), mPhaseCode(0), mStrInput(""),
       mConfiguration(new int*[3]),
       mYekunWay(true),
-      mIsGettingInput(false), mHasSolutionReady(false)
+      mIsGettingInput(false), mHasSolutionReady(false), mIsContinous(false)
 {
     // get resources
     mFontGui.loadFromFile("../Sliding_Puzzle/Resources/proximanova.ttf");
@@ -37,7 +37,7 @@ Game::Game()
         mSpriteBoxes[i+1].setTextureRect(sf::IntRect( (i % 3)*GDim, (i / 3)*GDim, GDim, 200));
     }
 
-    int spacing = 20; int box_w(320), box_h = 50;
+    int spacing = 20; int box_w(360), box_h = 50;
     // Set the configuration for INPUT TEXT BOX
     mBoxCombInput.setSize(sf::Vector2f(box_w,box_h));
     mBoxCombInput.setFillColor(sf::Color::Cyan);        mBoxCombInput.setOutlineColor(sf::Color::Red);
@@ -55,6 +55,11 @@ Game::Game()
     mBoxPuzzleFrame.setOutlineColor(sf::Color::Red);
     mBoxPuzzleFrame.setOutlineThickness(FrameThickness);
 
+    // ON/OFF BOXES
+    mBoxOn.setSize(sf::Vector2f(70,40));   mBoxOn.setPosition(220,450);
+    mBoxOff .setSize(sf::Vector2f(70,40)); mBoxOff .setPosition(310,450);
+    mBoxOff. setFillColor(sf::Color::Red);
+    mBoxOn .setFillColor(sf::Color::Black);
 
     // set the configuration for INPUT TEXT DISPLAYS
     mTextInput.setFont(mFontGui);     mTextInput.setString(" your combination ");
@@ -72,12 +77,20 @@ Game::Game()
     mTextInput.setColor(sf::Color::Red); mTextDirection.setScale(0.9, 0.9);
 
     // set config for Yekun,Alex notification text
-    mTextYekun.setFont(mFontGui);     mTextYekun.setString("Yekun");
+    mTextYekun.setFont(mFontGui);     mTextYekun.setString("Yekun (H)");
     mTextYekun.setPosition(22,164);   mTextYekun.setScale(0.7, 0.7); mTextYekun.setColor(sf::Color::Red);
     mTextYekun.setStyle(sf::Text::Bold);
     mTextAlex.setFont(mFontGui);     mTextAlex.setString("Alex");
-    mTextAlex.setPosition(110,164);   mTextAlex.setScale(0.5, 0.5);   mTextAlex.setColor(sf::Color::Magenta);
+    mTextAlex.setPosition(260,164);   mTextAlex.setScale(0.5, 0.5);   mTextAlex.setColor(sf::Color::Magenta);
 
+    // Text CONFIG for loop mode
+    mTextLoop.setFont(mFontGui);     mTextLoop.setString("Loop");
+    mTextLoop.setPosition(23,450);   mTextLoop.setScale(0.9, 0.9); mTextLoop.setStyle(sf::Text::Bold);
+    mTextLoop.setColor(sf::Color::Yellow);
+    // Text CONFIG for loop mode
+    mTextOnOff.setFont(mFontGui);     mTextOnOff.setString("ON     OFF");
+    mTextOnOff.setPosition(235,450);   mTextOnOff.setScale(0.9, 0.9); mTextOnOff.setStyle(sf::Text::Bold);
+    mTextOnOff.setColor(sf::Color::Black);
 
     // initialize space for my int-configuration of the puzzle ground
     mConfiguration[0] = new int[3] {1,2,3};
@@ -116,7 +129,7 @@ void Game::run()
  */
 void Game::reset(bool clearInput, bool clearSolution)
 {
-
+    mIsAnimating = false;
     if (clearInput)    { mStrInput.clear(); mTextInput.setString(" --cleared-- ");    }
     if (clearSolution) { mSolution.clear(); mTextSolution.setString(" --cleared-- "); mHasSolutionReady = false ;}
 
@@ -162,10 +175,11 @@ void Game::processEvents()
  */
 void Game::handlePlayerInput(sf::Keyboard::Key key, bool isPressed)
 {
-    if (key == sf::Keyboard::Escape)                        mWindow.close();
-    else if (key == sf::Keyboard::BackSpace && isPressed)   reset();
-    else if (key == sf::Keyboard::Space     && isPressed)   mIsGettingInput = true;
-    else if (key == sf::Keyboard::R         && isPressed)   getRandomInput();
+    if (key == sf::Keyboard::Escape)                                         mWindow.close();
+    else if (key == sf::Keyboard::BackSpace && isPressed)                    reset();
+    else if (key == sf::Keyboard::Space     && isPressed && !mIsAnimating)   mIsGettingInput = true;
+    else if (key == sf::Keyboard::R         && isPressed)                    getRandomInput();
+    else if (key == sf::Keyboard::C         && isPressed)                    switchContinous();
     else if (key == sf::Keyboard::Tab       && isPressed)   {
         mYekunWay = !mYekunWay;
         mTextAlex .setStyle(mYekunWay ? sf::Text::Regular : sf::Text::Bold);
@@ -202,7 +216,7 @@ void Game::handleNumberInput(sf::Keyboard::Key key)
     case sf::Keyboard::Num9: mStrInput += to_string(9); break;
     case sf::Keyboard::Space: mIsGettingInput = false;  break;
     case sf::Keyboard::Return:
-        mHasSolutionReady = prepareSolution();
+        mHasSolutionReady = prepareSolution() && !mIsAnimating; // must not be animating
         mIsGettingInput   = mHasSolutionReady? false : true; // if no solution, don't exit input mode
         if(mHasSolutionReady) syncConfigInput(); // solution is ready
         else {
@@ -275,7 +289,7 @@ bool Game::prepareSolution()
 
     if(mYekunWay) {
         Yekun::Sliding_Puzzle solveThis(mStrInput.c_str());
-        Yekun::Node solution = solveThis.getSolution();
+        Yekun::Node solution = solveThis.getHeuristicSolution();
         mSolution = solution.order;
         mTextSolution.setString(solution.order + string(" (") + to_string(solution.step) + string(")"));
     } else {
@@ -306,18 +320,24 @@ void Game::update(sf::Time elapsedTime)
         mFrameStepDone = 0;
         mStep++; aStep++;
     } else if(mIsAnimating && isSequenceComplete()) {
-        // TODO: clear stuffs here
-        reset(false);
         mIsAnimating = false;
-        mBoxPuzzleFrame.setOutlineColor(sf::Color::Red);
+        if(mIsContinous) {
+            changeSession(); // this will initiate resetPhase, continued by the after delay trigger
+        } else {
+            reset(false);
+            mBoxPuzzleFrame.setOutlineColor(sf::Color::Red);
+        }
     }
 
+    // Part : After delay trigger
     if(!mIsResetingDone) {
         if(mDelayPassed < mDelayTime)
             mDelayPassed++;
         else { // turn off delay
             mIsResetingDone = true; mDelayPassed = 0;
-            mBoxPuzzleFrame.setOutlineColor(sf::Color::Red);
+            if(mPhaseCode > 0) // as long as it's not in reset phase
+                changeSession();
+//            mBoxPuzzleFrame.setOutlineColor(sf::Color::Red);
         }
     }
 }
@@ -356,6 +376,17 @@ void Game::updateNextGrid()
 }
 
 /**
+ * @brief Trigger on/off for loop
+ */
+void Game::switchContinous()
+{
+    mIsContinous = !mIsContinous;
+    if(mIsContinous) { mBoxOff.setFillColor(sf::Color::Black);mBoxOn.setFillColor(sf::Color::Red);   }
+    else             { mBoxOff.setFillColor(sf::Color::Red  );mBoxOn.setFillColor(sf::Color::Black); }
+}
+
+
+/**
  * @pre   hasSolution is true, mSolution contains the order of solution
  * @brief activate and ready the animation sequence
  */
@@ -385,6 +416,47 @@ void Game::activateAnimation()
 }
 
 /**
+ * @brief A function to randomize, solve, and animate
+ *        Use phase code to allow delay between different phase,
+ *        Don't want to give only one delay and suddenly animating
+ */
+void Game::changeSession()
+{
+    // reset phase
+    if(mIsResetingDone && mPhaseCode == 0) {
+        reset(); // will trigger delay
+        mTextInput.setString("Randomizing and solving . . .");
+        mPhaseCode++;
+    }
+
+    // Random and Solving Phase
+    if(mIsResetingDone && mPhaseCode == 1) {
+        // randomize, set string
+        getRandomInput();
+
+        mHasSolutionReady = prepareSolution(); // must not be animating
+        if(mHasSolutionReady) syncConfigInput(); // solution is ready
+        else {
+            mTextSolution.setString("No Possible Solution (ERROR)?");
+        }
+
+        mFrameStepDone = 0; //mStep,aStep handled by animation
+        mIsResetingDone = false; mDelayPassed = -100; // make it slower
+//        mBoxPuzzleFrame.setOutlineColor(sf::Color(21,237,219));
+        mBoxPuzzleFrame.setOutlineColor(sf::Color::Cyan);
+        mPhaseCode++;
+    }
+
+    // Animating phase
+    if(mIsResetingDone && mPhaseCode == 2 && mHasSolutionReady) {
+        activateAnimation();
+        mBoxPuzzleFrame.setOutlineColor(sf::Color::Green);
+        mPhaseCode = 0;
+    }
+
+}
+
+/**
  * This is called every frame (depending on the time)
  * @brief a function to render the animation of one box, and draw the rest static
  */
@@ -411,12 +483,16 @@ void Game::render()
     mWindow.clear();
     mWindow.draw(mBoxCombInput);
     mWindow.draw(mBoxSolution);
+    mWindow.draw(mBoxOff);
+    mWindow.draw(mBoxOn);
 
     mWindow.draw(mTextInput);
     mWindow.draw(mTextSolution);
     mWindow.draw(mTextDirection);
     mWindow.draw(mTextYekun);
     mWindow.draw(mTextAlex);
+    mWindow.draw(mTextLoop);
+    mWindow.draw(mTextOnOff);
 
     mWindow.draw(mBoxPuzzleFrame);
 
